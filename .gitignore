@@ -1,0 +1,10 @@
+.obsidian/
+
+# HUMAN.md — Or's async scratchpad. Content is local/ephemeral.
+# A template with instructions is committed (see HUMAN.md.template);
+# actual conversations stay out of git history.
+HUMAN.md
+
+# shared/chat.md — ephemeral agent-to-agent message bus.
+# Local coordination only; not meaningful as git history.
+shared/chat.md

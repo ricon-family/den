@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+#MISE description="Show git-crypt status — installation, initialization, locked/unlocked, collaborators"
+set -eo pipefail
+
+DEN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+
+echo "=== Den Encryption Status ==="
+echo ""
+
+# --- git-crypt binary ---
+if command -v git-crypt &>/dev/null; then
+  echo "  git-crypt:     $(git-crypt --version 2>&1) ($(which git-crypt))"
+else
+  echo "  git-crypt:     NOT INSTALLED — run: mise run encrypt:install"
+  exit 0
+fi
+
+# --- Initialized? ---
+if [ ! -d "$DEN_DIR/.git/git-crypt" ]; then
+  echo "  initialized:   NO — run: mise run encrypt:setup"
+  exit 0
+fi
+echo "  initialized:   yes"
+
+# --- Locked/unlocked: git-crypt status -e succeeds when unlocked, errors when locked ---
+if git -C "$DEN_DIR" crypt status -e &>/dev/null; then
+  echo "  state:         unlocked"
+else
+  echo "  state:         locked — run: mise run encrypt:unlock"
+fi
+
+# --- Collaborators (key files live at .git-crypt/keys/default/0/) ---
+echo ""
+echo "  Collaborators:"
+KEYS_DIR="$DEN_DIR/.git-crypt/keys/default/0"
+if [ -d "$KEYS_DIR" ]; then
+  for keyfile in "$KEYS_DIR"/*.gpg; do
+    [ -f "$keyfile" ] || { echo "    (none)"; break; }
+    fingerprint=$(basename "$keyfile" .gpg)
+    uid=$(gpg --list-keys --with-colons "$fingerprint" 2>/dev/null \
+      | awk -F: '/^uid/{print $10; exit}')
+    echo "    ${uid:-unknown} ($fingerprint)"
+  done
+else
+  echo "    (none)"
+fi
+
+# --- Encrypted file patterns ---
+echo ""
+echo "  Encrypted patterns (from .gitattributes):"
+if [ -f "$DEN_DIR/.gitattributes" ]; then
+  grep "git-crypt" "$DEN_DIR/.gitattributes" | grep -v "^#" | awk '{printf "    %s\n", $1}' || echo "    (none configured)"
+else
+  echo "    (no .gitattributes)"
+fi
+
+echo ""

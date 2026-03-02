@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+#MISE description="Commit and push den repo changes, then delegate to agent-level sync if available"
+set -eo pipefail
+
+HOME_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+
+sync_repo() {
+  local repo_path="$1"
+  local label="$2"
+
+  if [ ! -d "$repo_path/.git" ]; then
+    echo "  ⚠ $label: not a git repo, skipping"
+    return 0
+  fi
+
+  cd "$repo_path"
+
+  if git diff --quiet HEAD 2>/dev/null && [ -z "$(git status --porcelain 2>/dev/null)" ]; then
+    echo "  ✓ $label: clean"
+    return 0
+  fi
+
+  changed=$(git status --porcelain | wc -l | tr -d ' ')
+  echo "  → $label: $changed file(s) changed"
+
+  git add -A
+  git commit -m "sync: auto-commit updates
+
+🌀 Magic applied with Wibey CLI 🪄 (https://wibey.walmart.com/cli)" --quiet
+  git push --quiet 2>/dev/null && echo "  ✓ $label: committed and pushed" || echo "  ✓ $label: committed (push failed — will retry next sync)"
+}
+
+echo "--- Sync ---"
+sync_repo "$HOME_DIR" "den"

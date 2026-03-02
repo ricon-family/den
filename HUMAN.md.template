@@ -1,0 +1,15 @@
+# HUMAN
+
+Or's async scratchpad. Zeke and Baby Joel structure, cross-reference, and distill into issues.
+
+**How this works:**
+1. Or writes raw thoughts anywhere in this file (no format needed)
+2. Agents restructure into sections, ask follow-up questions
+3. Or replies inline — discussion goes until Or signals "agree" or "resolved"
+4. Agents condense resolved discussions to bullets, distill into issues, mark ✅
+
+**Status key:** 🟡 = discussing, 🔵 = ready to file issue, ✅ = distilled
+
+---
+
+*Raw thoughts welcome anywhere — agents will restructure on next pass.*

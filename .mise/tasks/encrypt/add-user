@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+#MISE description="Add a GPG collaborator who can decrypt den zettels"
+#USAGE flag "--gpg-key <fingerprint>" help="GPG key fingerprint to add"
+set -eo pipefail
+
+DEN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+fingerprint="${usage_gpg_key:?Usage: mise run encrypt:add-user --gpg-key <fingerprint>}"
+
+if ! command -v git-crypt &>/dev/null; then
+  echo "git-crypt not found. Run: mise run encrypt:install" >&2
+  exit 1
+fi
+
+if [ ! -d "$DEN_DIR/.git/git-crypt" ]; then
+  echo "git-crypt not initialized. Run: mise run encrypt:setup" >&2
+  exit 1
+fi
+
+if ! gpg --list-keys "$fingerprint" &>/dev/null; then
+  echo "Error: key $fingerprint not found in GPG keyring." >&2
+  echo "Import the public key first: gpg --import <pubkey.asc>" >&2
+  exit 1
+fi
+
+key_uid=$(gpg --list-keys --with-colons "$fingerprint" | awk -F: '/^uid/{print $10; exit}')
+echo "Adding collaborator: $key_uid ($fingerprint)"
+git -C "$DEN_DIR" crypt add-gpg-user --trusted "$fingerprint"
+echo "Done. They can now run 'mise run encrypt:unlock' to access the zettels."

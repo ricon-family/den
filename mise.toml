@@ -1,0 +1,10 @@
+[tools]
+usage = "latest"
+
+# git-crypt has no macOS ARM prebuilt binary — install via: mise run encrypt:install
+
+# Home — shared agent infrastructure
+#
+# Each agent has tasks in agents/<name>/.mise/tasks/
+# Shared tasks go in .mise/tasks/
+# Run `mise tasks` to see available tasks

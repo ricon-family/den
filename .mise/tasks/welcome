@@ -1,0 +1,97 @@
+#!/usr/bin/env bash
+#MISE description="Den overview — who lives here, recent activity, HUMAN.md"
+set -eo pipefail
+
+DEN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+AGENTS_DIR="$DEN_DIR/agents"
+
+echo "=== The Den ==="
+echo ""
+
+# --- Residents ---
+echo "--- Residents ---"
+for room in "$AGENTS_DIR"/*/; do
+  [ ! -d "$room" ] && continue
+  name=$(basename "$room")
+  # Check for recent activity (last commit touching their room)
+  last_activity=$(cd "$DEN_DIR" && git log -1 --format='%ar' -- "agents/$name/" 2>/dev/null || echo "unknown")
+  echo "  $name (last active: $last_activity)"
+done
+echo ""
+
+# --- HUMAN.md ---
+HUMAN_FILE="$DEN_DIR/HUMAN.md"
+if [ -f "$HUMAN_FILE" ]; then
+  # Count non-header content lines
+  content_lines=$(tail -n +6 "$HUMAN_FILE" | grep -c '[^[:space:]]' 2>/dev/null || echo "0")
+  if [ "$content_lines" -gt 0 ]; then
+    echo "--- HUMAN.md ($content_lines lines of notes) ---"
+    tail -n +6 "$HUMAN_FILE" | head -10
+    [ "$content_lines" -gt 10 ] && echo "  ... ($((content_lines - 10)) more lines)"
+  else
+    echo "--- HUMAN.md (empty — Or's scratchpad is clear) ---"
+  fi
+  echo ""
+fi
+
+# --- Chat ---
+echo "--- Recent Chat ---"
+CHAT_FILE="$DEN_DIR/shared/chat.md"
+if [ -f "$CHAT_FILE" ]; then
+  # Show last 2 message headers
+  last_msgs=$(grep '^### ' "$CHAT_FILE" | tail -3)
+  if [ -n "$last_msgs" ]; then
+    echo "$last_msgs" | while read -r line; do
+      echo "  $line"
+    done
+  else
+    echo "  (no messages)"
+  fi
+else
+  echo "  (no chat file)"
+fi
+echo ""
+
+# --- Repo Status ---
+echo "--- Repo Status ---"
+cd "$DEN_DIR"
+dirty=$(git status --porcelain 2>/dev/null | wc -l | tr -d ' ')
+branch=$(git branch --show-current 2>/dev/null)
+if [ "$dirty" -gt 0 ]; then
+  echo "  branch: $branch ($dirty uncommitted file(s))"
+else
+  echo "  branch: $branch (clean)"
+fi
+
+# Check if behind/ahead
+tracking=$(git rev-parse --abbrev-ref '@{upstream}' 2>/dev/null || echo "")
+if [ -n "$tracking" ]; then
+  ahead=$(git rev-list "$tracking..HEAD" --count 2>/dev/null || echo "0")
+  behind=$(git rev-list "HEAD..$tracking" --count 2>/dev/null || echo "0")
+  [ "$ahead" -gt 0 ] && echo "  $ahead commit(s) ahead of remote"
+  [ "$behind" -gt 0 ] && echo "  $behind commit(s) behind remote"
+fi
+echo ""
+
+# --- Open Issues ---
+echo "--- Open Issues ---"
+issue_count=$(GH_HOST=gecgithub01.walmart.com gh issue list --repo vn5a6e7/den --state open --json number --jq 'length' 2>/dev/null || echo "?")
+echo "  $issue_count open issue(s) on vn5a6e7/den"
+echo ""
+
+# --- Encryption Status ---
+echo "--- Encryption ---"
+if [ ! -d "$DEN_DIR/.git/git-crypt" ]; then
+  echo "  ⚠  Not set up on this machine. Run: mise run encrypt:setup"
+elif ! command -v git-crypt &>/dev/null; then
+  echo "  ⚠  git-crypt not installed. Run: mise run encrypt:setup"
+else
+  if git -C "$DEN_DIR" crypt status -e &>/dev/null; then
+    echo "  ✓  Unlocked — zettels are readable"
+  else
+    echo "  ⚠  Locked — zettels are encrypted. Run: mise run encrypt:unlock"
+  fi
+fi
+echo ""
+
+echo "Run 'den move:in' to add a new resident."
