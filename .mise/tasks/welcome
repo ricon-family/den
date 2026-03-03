@@ -75,8 +75,8 @@ echo ""
 
 # --- Open Issues ---
 echo "--- Open Issues ---"
-issue_count=$(GH_HOST=gecgithub01.walmart.com gh issue list --repo vn5a6e7/den --state open --json number --jq 'length' 2>/dev/null || echo "?")
-echo "  $issue_count open issue(s) on vn5a6e7/den"
+issue_count=$(GH_HOST=github.com gh issue list --repo ricon-family/den --state open --json number --jq 'length' 2>/dev/null || echo "?")
+echo "  $issue_count open issue(s) on ricon-family/den"
 echo ""
 
 # --- Encryption Status ---
