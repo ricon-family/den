@@ -12,7 +12,7 @@ Then read your canonical identity and startup instructions:
 
 | Agent | Identity file (CLAUDE.md) |
 |---|---|
-| baby-joel | `~/agents/baby-joel/baby-joel/CLAUDE.md` |
+| baby-joel | `~/agents/baby-joel/zettelkasten/CLAUDE.md` |
 | zeke | `~/agents/zeke/zeke/CLAUDE.md` |
 
 **Read that file now and follow the startup procedure it describes.**
@@ -56,7 +56,7 @@ Agents have **two** places to store information:
 - **Structure:** `agents/<name>/` rooms with optional `Zettels/` and `.mise/tasks/`
 
 ### Private Zettelkasten — Personal Repo
-- **Location:** `~/agents/<name>/<name>/` (e.g., `~/agents/baby-joel/baby-joel/`)
+- **Location:** `~/agents/<name>/zettelkasten/` (e.g., `~/agents/baby-joel/zettelkasten/`)
 - **Contains:** `CLAUDE.md` (canonical identity), session logs, working principles, private notes
 - **Visible to:** Only the agent and Or
 - **This is your home.** The den is where you collaborate; the zettelkasten is who you are.
@@ -69,4 +69,4 @@ Agents have **two** places to store information:
 
 ## Personal Workspace
 
-Each agent has a workspace at `~/agents/<name>/` for cloning repos, running builds, and hands-on work. The private zettelkasten (`~/agents/<name>/<name>/`) also lives there.
+Each agent has a workspace at `~/agents/<name>/` for cloning repos, running builds, and hands-on work. The private zettelkasten (`~/agents/<name>/zettelkasten/`) also lives there.
