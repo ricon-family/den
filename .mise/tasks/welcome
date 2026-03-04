@@ -36,9 +36,9 @@ fi
 
 # --- Chat ---
 echo "--- Recent Chat ---"
-CHAT_FILE="$DEN_DIR/shared/chat.md"
+CHAT_FILE="${HOME}/.local/share/chat/ricon-family-den.md"
 if [ -f "$CHAT_FILE" ]; then
-  # Show last 2 message headers
+  # Show last 3 message headers
   last_msgs=$(grep '^### ' "$CHAT_FILE" | tail -3)
   if [ -n "$last_msgs" ]; then
     echo "$last_msgs" | while read -r line; do
