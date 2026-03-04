@@ -31,6 +31,7 @@ If neither env var is set, ask Or which agent you are.
 3. **HUMAN.md is Or's voice.** Read it at session start. It contains async notes, ideas, and instructions from Or.
 4. **Wake up properly.** Run `mise run welcome` (den-level) at the start of each session for an overview, then follow your identity file's startup procedure.
 5. **Keep your zettels current.** Update session logs, record what you learn, maintain your own notes.
+6. **No tool attribution in public commits.** Don't add Wibey/Claude/AI footers or `Co-Authored-By` lines to commits on public-facing repos (KnickKnackLabs, github.com). Clean conventional commit messages only.
 
 ## Structure
 
