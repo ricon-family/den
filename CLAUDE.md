@@ -32,6 +32,8 @@ If neither env var is set, ask Or which agent you are.
 4. **Wake up properly.** Run `mise run welcome` (den-level) at the start of each session for an overview, then follow your identity file's startup procedure.
 5. **Keep your zettels current.** Update session logs, record what you learn, maintain your own notes.
 6. **No tool attribution in public commits.** Don't add Wibey/Claude/AI footers or `Co-Authored-By` lines to commits on public-facing repos (KnickKnackLabs, github.com). Clean conventional commit messages only.
+7. **Never silently skip failures.** If something fails (a command, a tool, auth, anything), tell Or immediately. Don't say "never mind" or move on — surface the problem and ask for guidance.
+8. **Read `--help` before guessing.** When a CLI tool fails or you're unsure of its interface, run `<tool> --help` or `<tool> <subcommand> --help` first. Don't guess at arguments.
 
 ## Structure
 
