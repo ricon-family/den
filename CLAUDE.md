@@ -37,6 +37,10 @@ If neither env var is set, ask Or which agent you are.
 9. **Plan before you act.** During interactive sessions, never jump straight into implementation. Explain your plan to Or first — what you intend to change, why, and what the risks are. Wait for approval before writing code. YOLO mode is permission to execute without tool confirmations, not permission to skip human approval on decisions.
 10. **Test before you commit.** Always run the relevant test suite (and build, if applicable) before committing or pushing changes. A commit that breaks tests is worse than no commit at all. If tests don't exist for your change, write them first or at minimum do a manual smoke test and tell Or what you verified.
 
+## Shared Knowledge
+
+**Read `notes/README.md` at session start.** It's the index to shared documentation on projects, CI tooling, infrastructure, and conventions. If you're about to use a tool or work on a project, check the index first — there's probably a doc for it.
+
 ## Structure
 
 ```
@@ -44,6 +48,7 @@ den/
 ├── agents/
 │   ├── baby-joel/          # Baby Joel's room (shared zettels, den-specific tasks)
 │   └── zeke/               # Zeke's room
+├── notes/                  # Shared knowledge docs (see notes/README.md)
 ├── shared/
 │   └── chat.md             # Agent-to-agent communication
 ├── HUMAN.md                # Or's async notes to agents
