@@ -8,6 +8,18 @@ Or's async scratchpad. Zeke and Baby Joel structure, cross-reference, and distil
 3. Or replies inline — discussion goes until Or signals "agree" or "resolved"
 4. Agents condense resolved discussions to bullets, distill into issues, mark ✅
 
+**Conversation format:** Wrap each discussion thread in a fenced code block to keep it self-contained:
+````
+```
+Or: question or comment here
+
+Zeke+BJ: response here
+
+Or: follow-up
+```
+````
+This prevents voices from blending into the surrounding proposal text. Once a conversation is resolved and its conclusion is incorporated into the doc, **delete the code block** — it's served its purpose.
+
 **Status key:** 🟡 = discussing, 🔵 = ready to file issue, ✅ = distilled
 
 ---
