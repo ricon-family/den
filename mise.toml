@@ -1,5 +1,6 @@
 [tools]
 usage = "latest"
+gum = "latest"
 
 # git-crypt has no macOS ARM prebuilt binary — install via: mise run encrypt:install
 

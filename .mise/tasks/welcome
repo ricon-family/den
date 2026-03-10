@@ -5,93 +5,203 @@ set -eo pipefail
 DEN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 AGENTS_DIR="$DEN_DIR/agents"
 
-echo "=== The Den ==="
-echo ""
+# Colors
+HEADING=212   # pink
+SUBHEAD=81    # blue
+DIM=240       # gray
 
-# --- Residents ---
-echo "--- Residents ---"
+# Section heading helper
+section() {
+  echo ""
+  gum style --bold --foreground "$HEADING" "$1"
+}
+
+# ━━━ Header ━━━
+echo ""
+gum style --bold --foreground "$HEADING" --border double --border-foreground "$DIM" \
+  --padding "0 2" "🏠 The Den"
+
+# ━━━ Residents ━━━
+section "Residents"
+resident_rows=""
 for room in "$AGENTS_DIR"/*/; do
   [ ! -d "$room" ] && continue
   name=$(basename "$room")
-  # Check for recent activity (last commit touching their room)
   last_activity=$(cd "$DEN_DIR" && git log -1 --format='%ar' -- "agents/$name/" 2>/dev/null || echo "unknown")
-  echo "  $name (last active: $last_activity)"
+  resident_rows+="${name},${last_activity}"$'\n'
 done
-echo ""
+if [ -n "$resident_rows" ]; then
+  printf "Agent,Last Active\n%s" "$resident_rows" \
+    | gum table --print --separator "," --border rounded \
+        --border.foreground "$DIM" --header.foreground "$SUBHEAD"
+fi
 
-# --- HUMAN.md ---
+# ━━━ HUMAN.md ━━━
 HUMAN_FILE="$DEN_DIR/HUMAN.md"
 if [ -f "$HUMAN_FILE" ]; then
-  # Count non-header content lines
-  content_lines=$(tail -n +6 "$HUMAN_FILE" | grep -c '[^[:space:]]' 2>/dev/null || echo "0")
-  if [ "$content_lines" -gt 0 ]; then
-    echo "--- HUMAN.md ($content_lines lines of notes) ---"
-    tail -n +6 "$HUMAN_FILE" | head -10
-    [ "$content_lines" -gt 10 ] && echo "  ... ($((content_lines - 10)) more lines)"
+  # Parse all callout threads after --- HEADER END ---
+  # Output format: KIND<tab>TITLE<tab>PARTICIPANTS
+  all_threads=$(HUMAN_FILE="$HUMAN_FILE" python3 << 'PYEOF' 2>/dev/null || true
+import re, os
+
+content = open(os.environ['HUMAN_FILE']).read()
+
+# Only parse content after the header marker
+marker = '--- HEADER END ---'
+idx = content.find(marker)
+if idx >= 0:
+    content = content[idx + len(marker):]
+
+# Callout openers: > [!note]- Title, > [!warning]- 👈 Title, > [!success]- Title
+callout_pat = re.compile(r'^> \[!(note|warning|success)\]-\s*(.+)', re.MULTILINE)
+
+for m in callout_pat.finditer(content):
+    kind = m.group(1)       # note, warning, or success
+    title = m.group(2).strip()
+
+    # Strip leading 👈 from title (already shown in status column)
+    title = re.sub(r'^👈\s*', '', title)
+
+    # Collect body lines (skip leading empty line after callout opener)
+    start = m.end()
+    body_lines = []
+    for line in content[start:].split('\n'):
+        if line.startswith('> '):
+            body_lines.append(line[2:])
+        elif line.strip() == '>' or line.strip() == '':
+            continue  # blank lines inside or between callout lines
+        else:
+            break
+
+    # Extract [Name] participants from body
+    name_pat = re.compile(r'^\[([A-Za-z][A-Za-z -]*?)\]')
+    participants = sorted(set(
+        name_pat.match(l).group(1)
+        for l in body_lines if name_pat.match(l)
+    ))
+    who = ', '.join(participants) if participants else '—'
+
+    # Emit kind so shell can split active vs resolved
+    print(f'{kind}\t{title}\t{who}')
+PYEOF
+)
+
+  # Split into active (note/warning) and resolved (success)
+  thread_rows=""
+  resolved_count=0
+  while IFS=$'\t' read -r kind title who; do
+    [ -z "$kind" ] && continue
+    if [ "$kind" = "success" ]; then
+      resolved_count=$((resolved_count + 1))
+    elif [ "$kind" = "warning" ]; then
+      thread_rows+="👈	${title}	${who}"$'\n'
+    else
+      thread_rows+=" 	${title}	${who}"$'\n'
+    fi
+  done <<< "$all_threads"
+  thread_count=$(echo "$thread_rows" | grep -c '[^[:space:]]' || true)
+
+  if [ "$thread_count" -gt 0 ] || [ "$resolved_count" -gt 0 ]; then
+    summary="${thread_count} active"
+    [ "$resolved_count" -gt 0 ] && summary+=", ${resolved_count} resolved"
+    section "📝 HUMAN.md  ($summary)"
+    if [ "$thread_count" -gt 0 ]; then
+      printf ' \tThread\tParticipants\n%s\n' "$thread_rows" \
+        | gum table --print --separator "	" --border rounded \
+            --border.foreground "$DIM" --header.foreground "$SUBHEAD"
+      gum style --faint "  👈 = needs human attention"
+    fi
   else
-    echo "--- HUMAN.md (empty — Or's scratchpad is clear) ---"
+    section "📝 HUMAN.md"
+    gum style --faint "(no active conversation threads)"
   fi
-  echo ""
 fi
 
-# --- Chat ---
-echo "--- Recent Chat ---"
-CHAT_FILE="${HOME}/.local/share/chat/ricon-family-den.md"
-if [ -f "$CHAT_FILE" ]; then
-  # Show last 3 message headers
-  last_msgs=$(grep '^### ' "$CHAT_FILE" | tail -3)
-  if [ -n "$last_msgs" ]; then
-    echo "$last_msgs" | while read -r line; do
-      echo "  $line"
-    done
+# ━━━ Chat ━━━
+section "💬 Chat"
+CHAT_DATA_DIR="${HOME}/.local/share/chat"
+if [ -d "$CHAT_DATA_DIR" ]; then
+  chat_rows=""
+  for chat_file in "$CHAT_DATA_DIR"/*.md; do
+    [ ! -f "$chat_file" ] && continue
+    channel=$(basename "$chat_file" .md)
+    last_msg=$({ grep '^### ' "$chat_file" || true; } | tail -1)
+    if [ -n "$last_msg" ]; then
+      msg_info=$(echo "$last_msg" | sed 's/^### //')
+      msg_count=$(grep -c '^### ' "$chat_file" || true)
+      chat_rows+="${channel},${msg_count},${msg_info}"$'\n'
+    fi
+  done
+  if [ -n "$chat_rows" ]; then
+    printf "Channel,Msgs,Last Activity\n%s" "$chat_rows" \
+      | gum table --print --separator "," --border rounded \
+          --border.foreground "$DIM" --header.foreground "$SUBHEAD"
   else
-    echo "  (no messages)"
+    gum style --faint "(no messages in any channel)"
+  fi
+
+  # Quick reference — detect agent name from env (set by shimmer)
+  _agent="${AGENT_NAME:-${GIT_AUTHOR_NAME:-}}"
+  if [ -n "$_agent" ]; then
+    _agent_lower=$(echo "$_agent" | tr '[:upper:]' '[:lower:]')
+    echo ""
+    (
+      printf 'Action\tCommand\n'
+      printf 'Read new messages\tchat read --for %s\n' "$_agent_lower"
+      printf 'Send a message\tchat send --from %s <msg>\n' "$_agent_lower"
+      printf 'Wait until @mentioned\tchat wait --for %s\n' "$_agent_lower"
+      printf 'Peek without marking read\tchat check --for %s\n' "$_agent_lower"
+      printf 'List all channels\tchat list\n'
+    ) | gum table --print --separator "	" --border rounded \
+          --border.foreground "$DIM" --header.foreground "$DIM"
   fi
 else
-  echo "  (no chat file)"
+  gum style --faint "(chat not installed — run: shiv install chat)"
 fi
-echo ""
 
-# --- Repo Status ---
-echo "--- Repo Status ---"
+# ━━━ Repo & Status ━━━
+section "📦 Repo"
 cd "$DEN_DIR"
-dirty=$(git status --porcelain 2>/dev/null | wc -l | tr -d ' ')
 branch=$(git branch --show-current 2>/dev/null)
+dirty=$(git status --porcelain 2>/dev/null | wc -l | tr -d ' ')
+
 if [ "$dirty" -gt 0 ]; then
-  echo "  branch: $branch ($dirty uncommitted file(s))"
+  branch_status="$branch ($dirty uncommitted)"
 else
-  echo "  branch: $branch (clean)"
+  branch_status="$branch (clean)"
 fi
 
-# Check if behind/ahead
 tracking=$(git rev-parse --abbrev-ref '@{upstream}' 2>/dev/null || echo "")
+sync_status=""
 if [ -n "$tracking" ]; then
   ahead=$(git rev-list "$tracking..HEAD" --count 2>/dev/null || echo "0")
   behind=$(git rev-list "HEAD..$tracking" --count 2>/dev/null || echo "0")
-  [ "$ahead" -gt 0 ] && echo "  $ahead commit(s) ahead of remote"
-  [ "$behind" -gt 0 ] && echo "  $behind commit(s) behind remote"
+  [ "$ahead" -gt 0 ] && sync_status+="↑${ahead} ahead "
+  [ "$behind" -gt 0 ] && sync_status+="↓${behind} behind "
+  [ -z "$sync_status" ] && sync_status="up to date"
 fi
-echo ""
 
-# --- Open Issues ---
-echo "--- Open Issues ---"
+repo_rows="Branch,${branch_status}"$'\n'
+[ -n "$sync_status" ] && repo_rows+="Remote,${sync_status}"$'\n'
+
+# Open issues
 issue_count=$(GH_HOST=github.com gh issue list --repo ricon-family/den --state open --json number --jq 'length' 2>/dev/null || echo "?")
-echo "  $issue_count open issue(s) on ricon-family/den"
-echo ""
+repo_rows+="Issues,${issue_count} open"$'\n'
 
-# --- Encryption Status ---
-echo "--- Encryption ---"
+# Encryption
 if [ ! -d "$DEN_DIR/.git/git-crypt" ]; then
-  echo "  ⚠  Not set up on this machine. Run: mise run encrypt:setup"
+  enc_status="⚠ not set up → mise run encrypt:setup"
 elif ! command -v git-crypt &>/dev/null; then
-  echo "  ⚠  git-crypt not installed. Run: mise run encrypt:setup"
+  enc_status="⚠ git-crypt not installed → mise run encrypt:setup"
+elif git -C "$DEN_DIR" crypt status -e &>/dev/null; then
+  enc_status="✓ unlocked"
 else
-  if git -C "$DEN_DIR" crypt status -e &>/dev/null; then
-    echo "  ✓  Unlocked — zettels are readable"
-  else
-    echo "  ⚠  Locked — zettels are encrypted. Run: mise run encrypt:unlock"
-  fi
+  enc_status="⚠ locked → mise run encrypt:unlock"
 fi
-echo ""
+repo_rows+="Encryption,${enc_status}"
 
-echo "Run 'den move:in' to add a new resident."
+printf "Property,Status\n%s\n" "$repo_rows" \
+  | gum table --print --separator "," --border rounded \
+      --border.foreground "$DIM" --header.foreground "$SUBHEAD"
+
+echo ""
