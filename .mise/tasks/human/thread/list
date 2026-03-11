@@ -46,8 +46,8 @@ for m in callout_pat.finditer(content):
         else:
             break
 
-    # Extract [Name] markers in order of appearance
-    name_pat = re.compile(r"^\[([A-Za-z][A-Za-z -]*?)\]")
+    # Extract [Name] or **[Name]** markers in order of appearance
+    name_pat = re.compile(r"^(?:\*\*)?\[([A-Za-z][A-Za-z -]*?)\](?:\*\*)?")
     authors = []
     for l in body_lines:
         nm = name_pat.match(l)

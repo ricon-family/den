@@ -38,10 +38,22 @@ def replace_codeblock(m):
     title = "TODO: title this thread"
 
     # Build callout: [!note]- with the content as callout body
+    # Bold [Name] prefixes and add --- dividers between messages
     callout_lines = [f"> [!note]- {title}"]
+    first_message = True
     for l in lines:
-        if l.strip() == "":
+        stripped = l.strip()
+        if stripped == "":
             callout_lines.append(">")
+        elif name_pat.match(stripped):
+            # Bold the name and add divider before non-first messages
+            if not first_message:
+                callout_lines.append(">")
+                callout_lines.append("> ---")
+                callout_lines.append(">")
+            bolded = name_pat.sub(lambda nm: f"**[{nm.group(1)}]**", stripped)
+            callout_lines.append(f"> {bolded}")
+            first_message = False
         else:
             callout_lines.append(f"> {l}")
 

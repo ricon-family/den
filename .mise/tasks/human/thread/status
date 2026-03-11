@@ -22,7 +22,7 @@ if idx >= 0:
     content = content[idx + len(marker):]
 
 callout_pat = re.compile(r"^> \[!(note|warning|success)\][+-]?\s*(.*)", re.MULTILINE)
-name_pat = re.compile(r"^\[([A-Za-z][A-Za-z -]*?)\]")
+name_pat = re.compile(r"^(?:\*\*)?\[([A-Za-z][A-Za-z -]*?)\](?:\*\*)?")
 
 counts = {"agent": 0, "or": 0, "resolved": 0, "unknown": 0}
 

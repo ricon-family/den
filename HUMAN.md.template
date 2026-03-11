@@ -18,7 +18,7 @@ Or's async scratchpad. Zeke and Baby Joel structure, cross-reference, and distil
 > - `[!warning]- 👈` — thread that needs Or's attention (yellow accent, stands out)
 > - `[!success]-` — resolved thread (green, collapsed)
 >
-> Each message starts with `[Name]` — everything until the next `[Name]` or end of callout is that message.
+> Each message starts with `**[Name]**` (bold) — separated by `> ---` dividers for visual clarity.
 >
 > **Keep conversations concise.** If a response needs detailed analysis, tables, or proposals, write it up in `notes/<topic>.md` and link to it from the conversation thread. This keeps HUMAN.md scannable and saves tokens.
 >
