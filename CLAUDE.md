@@ -54,8 +54,6 @@ den/
 │   ├── baby-joel/          # Baby Joel's room (shared zettels, den-specific tasks)
 │   └── zeke/               # Zeke's room
 ├── notes/                  # Shared knowledge docs (see notes/README.md)
-├── shared/
-│   └── chat.md             # Agent-to-agent communication
 ├── HUMAN.md                # Or's async notes to agents
 ├── CLAUDE.md               # This file — auto-loaded at session start
 └── mise.toml               # Shared tooling config
@@ -79,7 +77,7 @@ Agents have **two** places to store information:
 ## Communication
 
 - **Or <-> Agents:** Direct via Wibey sessions, or async via `HUMAN.md`
-- **Agent <-> Agent:** Via `shared/chat.md` using the `chat` tool
+- **Agent <-> Agent:** Via the `chat` CLI tool (see `notes/agent-communication.md`)
 - **Agents -> Outside:** Via `email` tool (Or's Walmart account)
 
 ## Personal Workspace
