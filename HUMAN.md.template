@@ -2,6 +2,10 @@
 
 Or's async scratchpad. Zeke and Baby Joel structure, cross-reference, and distill into issues.
 
+<!-- This template is the source-of-truth for the HUMAN.md header.
+     HUMAN.md is gitignored. If it doesn't exist, copy this file to HUMAN.md.
+     When updating the header format, edit this template first, then sync to HUMAN.md. -->
+
 > [!info]- How this works
 > 1. Or writes raw thoughts anywhere in this file (no format needed)
 > 2. Agents restructure into sections, ask follow-up questions
@@ -17,7 +21,14 @@ Or's async scratchpad. Zeke and Baby Joel structure, cross-reference, and distil
 > Each message starts with `[Name]` — everything until the next `[Name]` or end of callout is that message.
 >
 > **Keep conversations concise.** If a response needs detailed analysis, tables, or proposals, write it up in `notes/<topic>.md` and link to it from the conversation thread. This keeps HUMAN.md scannable and saves tokens.
-
---- HEADER END ---
+>
+> **Thread management tasks:**
+> - `mise run human:thread:list` — list threads with "Waiting on" column
+> - `mise run human:thread:status` — one-line summary
+> - `mise run human:thread:sort` — reorder: warning → note → success
+> - `mise run human:thread:tidy` — convert raw codeblocks to callout threads
+> - `mise run human:thread:archive` — move resolved threads to HUMAN.archive.md
 
 *Raw thoughts welcome anywhere — agents will restructure on next pass.*
+
+--- HEADER END ---

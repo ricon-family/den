@@ -4,6 +4,7 @@
 # A template with instructions is committed (see HUMAN.md.template);
 # actual conversations stay out of git history.
 HUMAN.md
+HUMAN.archive.md
 
 # shared/chat.md — ephemeral agent-to-agent message bus.
 # Local coordination only; not meaningful as git history.
