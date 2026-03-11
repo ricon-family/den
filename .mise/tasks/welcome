@@ -39,82 +39,9 @@ fi
 # ━━━ HUMAN.md ━━━
 HUMAN_FILE="$DEN_DIR/HUMAN.md"
 if [ -f "$HUMAN_FILE" ]; then
-  # Parse all callout threads after --- HEADER END ---
-  # Output format: KIND<tab>TITLE<tab>PARTICIPANTS
-  all_threads=$(HUMAN_FILE="$HUMAN_FILE" python3 << 'PYEOF' 2>/dev/null || true
-import re, os
-
-content = open(os.environ['HUMAN_FILE']).read()
-
-# Only parse content after the header marker
-marker = '--- HEADER END ---'
-idx = content.find(marker)
-if idx >= 0:
-    content = content[idx + len(marker):]
-
-# Callout openers: > [!note]- Title, > [!warning]- 👈 Title, > [!success]- Title
-callout_pat = re.compile(r'^> \[!(note|warning|success)\]-\s*(.+)', re.MULTILINE)
-
-for m in callout_pat.finditer(content):
-    kind = m.group(1)       # note, warning, or success
-    title = m.group(2).strip()
-
-    # Strip leading 👈 from title (already shown in status column)
-    title = re.sub(r'^👈\s*', '', title)
-
-    # Collect body lines (skip leading empty line after callout opener)
-    start = m.end()
-    body_lines = []
-    for line in content[start:].split('\n'):
-        if line.startswith('> '):
-            body_lines.append(line[2:])
-        elif line.strip() == '>' or line.strip() == '':
-            continue  # blank lines inside or between callout lines
-        else:
-            break
-
-    # Extract [Name] participants from body
-    name_pat = re.compile(r'^\[([A-Za-z][A-Za-z -]*?)\]')
-    participants = sorted(set(
-        name_pat.match(l).group(1)
-        for l in body_lines if name_pat.match(l)
-    ))
-    who = ', '.join(participants) if participants else '—'
-
-    # Emit kind so shell can split active vs resolved
-    print(f'{kind}\t{title}\t{who}')
-PYEOF
-)
-
-  # Split into active (note/warning) and resolved (success)
-  thread_rows=""
-  resolved_count=0
-  while IFS=$'\t' read -r kind title who; do
-    [ -z "$kind" ] && continue
-    if [ "$kind" = "success" ]; then
-      resolved_count=$((resolved_count + 1))
-    elif [ "$kind" = "warning" ]; then
-      thread_rows+="👈	${title}	${who}"$'\n'
-    else
-      thread_rows+=" 	${title}	${who}"$'\n'
-    fi
-  done <<< "$all_threads"
-  thread_count=$(echo "$thread_rows" | grep -c '[^[:space:]]' || true)
-
-  if [ "$thread_count" -gt 0 ] || [ "$resolved_count" -gt 0 ]; then
-    summary="${thread_count} active"
-    [ "$resolved_count" -gt 0 ] && summary+=", ${resolved_count} resolved"
-    section "📝 HUMAN.md  ($summary)"
-    if [ "$thread_count" -gt 0 ]; then
-      printf ' \tThread\tParticipants\n%s\n' "$thread_rows" \
-        | gum table --print --separator "	" --border rounded \
-            --border.foreground "$DIM" --header.foreground "$SUBHEAD"
-      gum style --faint "  👈 = needs human attention"
-    fi
-  else
-    section "📝 HUMAN.md"
-    gum style --faint "(no active conversation threads)"
-  fi
+  thread_summary=$(mise run human:thread:status 2>/dev/null || echo "")
+  section "📝 HUMAN.md  ($thread_summary)"
+  mise run human:thread:list 2>/dev/null || true
 fi
 
 # ━━━ Chat ━━━
