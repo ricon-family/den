@@ -20,6 +20,7 @@ section() {
 echo ""
 gum style --bold --foreground "$HEADING" --border double --border-foreground "$DIM" \
   --padding "0 2" "🏠 The Den"
+gum style --faint "$(date '+%A, %B %-d, %Y · %-I:%M %p')"
 
 # ━━━ Residents ━━━
 section "Residents"
