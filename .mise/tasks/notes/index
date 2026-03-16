@@ -1,5 +1,0 @@
-#!/usr/bin/env bash
-#MISE description="Auto-generate README.md (tag-grouped index) and graph.md (backlink map) from note frontmatter"
-set -eo pipefail
-
-exec notes index

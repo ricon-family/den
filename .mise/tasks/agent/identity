@@ -13,7 +13,7 @@ if [ -f "$IDENTITY_FILE" ]; then
     exit 0
   else
     echo "Error: $IDENTITY_FILE exists but appears encrypted." >&2
-    echo "Run: mise run encrypt:unlock" >&2
+    echo "Run: notes encrypt:unlock" >&2
     exit 1
   fi
 fi

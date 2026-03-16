@@ -1,7 +1,7 @@
 
 # Encrypted paths — transparently encrypted by git-crypt on push/pull.
 # Never store sensitive content outside these patterns.
-# Run 'mise run encrypt:setup' to initialize on a new machine.
+# Run 'notes encrypt:setup' to initialize on a new machine.
 
 # Agent rooms — everything inside each agent's room is private
 agents/*/Zettels/**        filter=git-crypt diff=git-crypt

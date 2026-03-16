@@ -1,0 +1,166 @@
+#!/usr/bin/env bash
+#MISE description="Notes overview — stats, recent activity, tag cloud, quick reference"
+set -eo pipefail
+
+DEN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+NOTES_DIR="$DEN_DIR/notes"
+
+# Colors (match den welcome)
+HEADING=212   # pink
+SUBHEAD=81    # blue
+DIM=240       # gray
+
+section() {
+  echo ""
+  gum style --bold --foreground "$HEADING" "$1"
+}
+
+# ━━━ Header ━━━
+echo ""
+gum style --bold --foreground "$HEADING" --border double --border-foreground "$DIM" \
+  --padding "0 2" "📓 Shared Notes"
+gum style --faint "$NOTES_DIR"
+
+# ━━━ Collect data ━━━
+note_count=0
+tag_set=""
+recent_lines=""
+stale_lines=""
+no_frontmatter=""
+today=$(date +%Y-%m-%d)
+week_ago=$(date -v-7d +%Y-%m-%d 2>/dev/null || date -d '7 days ago' +%Y-%m-%d 2>/dev/null || echo "")
+stale_cutoff=$(date -v-30d +%Y-%m-%d 2>/dev/null || date -d '30 days ago' +%Y-%m-%d 2>/dev/null || echo "")
+
+for f in "$NOTES_DIR"/*.md; do
+  [ ! -f "$f" ] && continue
+  base=$(basename "$f")
+  [[ "$base" == "README.md" || "$base" == "graph.md" ]] && continue
+  note_count=$((note_count + 1))
+
+  # Parse frontmatter (simple line-by-line, no yaml dependency)
+  title="" updated="" created="" in_fm=false current_key=""
+  while IFS= read -r line; do
+    if [[ "$line" == "---" ]]; then
+      if $in_fm; then break; else in_fm=true; continue; fi
+    fi
+    $in_fm || continue
+
+    # Top-level key (not indented)
+    if [[ "$line" =~ ^[a-z] ]]; then
+      key="${line%%:*}"
+      val="${line#*: }"
+      current_key="$key"
+      case "$key" in
+        title)   title="$val" ; title="${title#\"}" ; title="${title%\"}" ;;
+        updated) updated="$val" ;;
+        created) created="$val" ;;
+        tags)
+          # Handle inline format: tags: [foo, bar, baz]
+          if [[ "$val" =~ ^\[.*\]$ ]]; then
+            inner="${val#[}" ; inner="${inner%]}"
+            IFS=',' read -ra inline_tags <<< "$inner"
+            for t in "${inline_tags[@]}"; do
+              t="${t# }" ; t="${t% }"  # trim spaces
+              [ -n "$t" ] && tag_set+="$t "
+            done
+          fi
+          ;;
+      esac
+    elif [[ "$line" =~ ^"  - " && "$current_key" == "tags" ]]; then
+      # Handle multi-line format: tags:\n  - foo\n  - bar
+      tag="${line#  - }"
+      tag_set+="$tag "
+    fi
+  done < "$f"
+
+  date_val="${updated:-$created}"
+
+  if [ -z "$title" ] && [ -z "$date_val" ]; then
+    no_frontmatter+="$base "
+    continue
+  fi
+
+  display_title="${title:-$base}"
+
+  # Recent (within 7 days)
+  if [ -n "$date_val" ] && [ -n "$week_ago" ] && [[ "$date_val" > "$week_ago" || "$date_val" == "$week_ago" ]]; then
+    recent_lines+="${date_val}	${display_title}"$'\n'
+  fi
+
+  # Stale (older than 30 days)
+  if [ -n "$date_val" ] && [ -n "$stale_cutoff" ] && [[ "$date_val" < "$stale_cutoff" ]]; then
+    stale_lines+="${date_val}	${display_title}"$'\n'
+  fi
+done
+
+# Count unique tags
+unique_tags=()
+for tag in $tag_set; do
+  found=false
+  for existing in "${unique_tags[@]:-}"; do
+    [[ "$tag" == "$existing" ]] && found=true && break
+  done
+  $found || unique_tags+=("$tag")
+done
+tag_count=${#unique_tags[@]}
+
+# Orphan count from graph.md
+orphan_count=0
+if [ -f "$NOTES_DIR/graph.md" ]; then
+  orphan_count=$(grep -c "no backlinks" "$NOTES_DIR/graph.md" 2>/dev/null || true)
+fi
+
+# ━━━ Overview table ━━━
+section "Overview"
+
+stats_rows="Notes	${note_count}"$'\n'
+stats_rows+="Tags	${tag_count}"$'\n'
+[[ "$orphan_count" -gt 0 ]] 2>/dev/null && stats_rows+="Orphans	${orphan_count} (no backlinks)"$'\n'
+[ -n "$no_frontmatter" ] && stats_rows+="Missing frontmatter	$(echo $no_frontmatter | wc -w | tr -d ' ')"$'\n'
+
+printf "Metric\tValue\n%s" "$stats_rows" \
+  | gum table --print --separator "	" --border rounded \
+      --border.foreground "$DIM" --header.foreground "$SUBHEAD"
+
+# ━━━ Recently Updated ━━━
+if [ -n "$recent_lines" ]; then
+  recent_sorted=$(echo -n "$recent_lines" | sort -r)
+  recent_count=$(echo -n "$recent_sorted" | grep -c . || true)
+  recent_shown=$(echo -n "$recent_sorted" | head -8)
+  section "Recently Updated"
+  printf "Updated\tNote\n%s" "$recent_shown" \
+    | gum table --print --separator "	" --border rounded \
+        --border.foreground "$DIM" --header.foreground "$SUBHEAD"
+  [ "$recent_count" -gt 8 ] && gum style --faint "  ...and $((recent_count - 8)) more updated this week"
+fi
+
+# ━━━ Tag Cloud ━━━
+if [ ${#unique_tags[@]} -gt 0 ]; then
+  section "Tags"
+  tag_display=$(printf '%s\n' "${unique_tags[@]}" | sort | tr '\n' '  ')
+  gum style --foreground "$DIM" "  $tag_display"
+fi
+
+# ━━━ Stale Notes ━━━
+if [ -n "$stale_lines" ]; then
+  stale_count=$(echo -n "$stale_lines" | grep -c . || true)
+  section "⏳ Stale (not updated in 30+ days)"
+  printf "Updated\tNote\n%s" "$(echo -n "$stale_lines" | sort | head -10)" \
+    | gum table --print --separator "	" --border rounded \
+        --border.foreground "$DIM" --header.foreground "$SUBHEAD"
+  [ "$stale_count" -gt 10 ] && gum style --faint "  ...and $((stale_count - 10)) more"
+fi
+
+# ━━━ Quick Reference ━━━
+section "Quick Reference"
+(
+  printf 'Command\tDescription\n'
+  printf 'notes index\tRebuild README.md + graph.md\n'
+  printf 'notes encrypt:status\tShow encryption state\n'
+  printf 'notes encrypt:setup\tFirst-time encryption setup\n'
+  printf 'notes encrypt:add-user\tAdd a GPG collaborator\n'
+  printf 'notes tokens <file>\tEstimate token count\n'
+) | gum table --print --separator "	" --border rounded \
+      --border.foreground "$DIM" --header.foreground "$DIM"
+
+echo ""
