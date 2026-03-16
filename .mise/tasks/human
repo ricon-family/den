@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+#MISE description="Output the path to HUMAN.md (used by shimmer human:threads:*)"
+#MISE hide=true
+set -eo pipefail
+
+DEN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+echo "$DEN_DIR/HUMAN.md"
