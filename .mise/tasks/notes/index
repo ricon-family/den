@@ -2,6 +2,4 @@
 #MISE description="Auto-generate README.md (tag-grouped index) and graph.md (backlink map) from note frontmatter"
 set -eo pipefail
 
-DEN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
-
-exec python3 "$DEN_DIR/lib/notes_index.py" "$DEN_DIR/notes"
+exec notes index
