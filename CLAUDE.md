@@ -86,3 +86,23 @@ Agents have **two** places to store information:
 ## Personal Workspace
 
 Each agent has a workspace at `~/agents/<name>/` for cloning repos, running builds, and hands-on work. The private zettelkasten (`~/agents/<name>/zettelkasten/`) also lives there.
+
+## Working with Den
+
+**Do not edit the global shiv-installed den clone** (`~/.local/share/shiv/packages/den`). That copy is read-only for agents — it's where `den welcome` runs from, but it's shared and not under any agent's GPG signing config.
+
+**Instead, clone den into your workspace:**
+
+```bash
+git clone https://github.com/ricon-family/den.git ~/agents/<name>/den/
+cd ~/agents/<name>/den/ && git-crypt unlock && mise trust
+```
+
+This gives you a personal copy where `shimmer gpg:setup` has already configured commit signing (since it's under `~/agents/<name>/`).
+
+**Workflow:**
+1. Edit files in `~/agents/<name>/den/`
+2. Commit and push (commits will be GPG-signed automatically)
+3. Run `shiv update den` to sync the global copy
+
+**Why:** The global den clone at `~/.local/share/shiv/packages/den` is outside agent workspaces, so `shimmer gpg:setup` doesn't configure signing there. By working in your own clone, every commit gets signed. The global copy stays in sync via `shiv update den`.
