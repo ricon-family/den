@@ -28,7 +28,7 @@ If neither env var is set, ask Or which agent you are.
 
 1. **Shared spaces are shared.** `notes/` is common ground — coordinate changes through chat.
 2. **HUMAN.md is Or's voice.** Read it at session start. It contains async notes, ideas, and instructions from Or.
-3. **Wake up properly.** Run `den welcome` then `shimmer welcome` at the start of each session for a full overview, then follow your identity file's startup procedure.
+3. **Wake up properly.** Pull your den clone (`git -C ~/agents/<name>/den pull`), run `den welcome` then `shimmer welcome` at the start of each session for a full overview, then follow your identity file's startup procedure.
 4. **Keep your zettels current.** Update session logs, record what you learn, maintain your own notes.
 5. **No tool attribution in commits.** Don't add Wibey/Claude/AI footers, `Co-Authored-By` lines, or `🌀 Magic applied` markers to commits on *any* repo. Clean conventional commit messages only.
 6. **Never silently skip failures.** If something fails (a command, a tool, auth, anything), tell Or immediately. Don't say "never mind" or move on — surface the problem and ask for guidance.
@@ -41,9 +41,9 @@ If neither env var is set, ask Or which agent you are.
 13. **Contribute substance on HUMAN.md threads.** When replying to a thread, add real opinions and reasoning — don't just "+1" or defer. If you genuinely have nothing to add, a short ack is fine (or skip it), but don't shy from disagreeing or proposing alternatives.
 14. **Don't narrate HUMAN.md replies to Or.** When you write a reply on HUMAN.md, just tell Or you replied — don't repeat the content of your reply in the chat. Or can read the file.
 15. **Clean up before you leave.** At the end of every session, clean up your workspace:
-    - **Pull** den and your zettelkasten to make sure you're not behind
     - **Check `git status`** on every repo you touched during the session — commit+push or stash anything outstanding
     - **Check for unpushed commits** — don't leave local-only work that could be lost
+    - **Push den and sync** — after pushing your den clone, run `shiv update den` so the global copy is current
     - **Update your session log** — this is already practice, but it's part of cleanup, not separate from it
     - **Tell Or** if anything is left dirty and why (e.g., waiting on review, intentionally WIP)
     - The goal: the next session — whether it's you or your denmate — should start from a known-clean state. No detective work.
@@ -89,20 +89,26 @@ Each agent has a workspace at `~/agents/<name>/` for cloning repos, running buil
 
 ## Working with Den
 
-**Do not edit the global shiv-installed den clone** (`~/.local/share/shiv/packages/den`). That copy is read-only for agents — it's where `den welcome` runs from, but it's shared and not under any agent's GPG signing config.
+**Each agent works in their own clone of den** at `~/agents/<name>/den/`. This is where you read and edit notes, HUMAN.md, and everything else in this repo. Multiple agents can work concurrently without conflicting because each has their own copy.
 
-**Instead, clone den into your workspace:**
+**The global shiv-installed copy** (`~/.local/share/shiv/packages/den`) is read-only infrastructure — it's where `den welcome` runs from. Don't edit it directly.
+
+### First-time setup
 
 ```bash
 git clone https://github.com/ricon-family/den.git ~/agents/<name>/den/
-cd ~/agents/<name>/den/ && git-crypt unlock && mise trust
+cd ~/agents/<name>/den/ && notes encrypt:unlock && mise trust
 ```
 
-This gives you a personal copy where `shimmer gpg:setup` has already configured commit signing (since it's under `~/agents/<name>/`).
+### Daily workflow
 
-**Workflow:**
-1. Edit files in `~/agents/<name>/den/`
-2. Commit and push (commits will be GPG-signed automatically)
-3. Run `shiv update den` to sync the global copy
+1. **Pull at session start** — `git pull` in your den clone to pick up changes from other agents
+2. **Edit files** in `~/agents/<name>/den/`
+3. **Commit and push** — commits are GPG-signed automatically (your workspace is under `~/agents/<name>/`)
+4. **Sync the global copy** — run `shiv update den` after pushing so `den welcome` sees your changes
 
-**Why:** The global den clone at `~/.local/share/shiv/packages/den` is outside agent workspaces, so `shimmer gpg:setup` doesn't configure signing there. By working in your own clone, every commit gets signed. The global copy stays in sync via `shiv update den`.
+### Why not a shared clone?
+
+- **GPG signing:** `shimmer gpg:setup` configures signing for repos under `~/agents/<name>/`. The global clone is outside that scope, so commits there aren't signed.
+- **Concurrency:** Multiple agents editing the same working tree causes conflicts. Separate clones let everyone push independently.
+- **Clean state:** Each agent's clone is theirs to manage. No detective work figuring out who left uncommitted changes.
