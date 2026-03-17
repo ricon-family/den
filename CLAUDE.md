@@ -47,6 +47,7 @@ If neither env var is set, ask Or which agent you are.
     - **Update your session log** — this is already practice, but it's part of cleanup, not separate from it
     - **Tell Or** if anything is left dirty and why (e.g., waiting on review, intentionally WIP)
     - The goal: the next session — whether it's you or your denmate — should start from a known-clean state. No detective work.
+16. **Ask Or when the VPN blocks you.** The Walmart network blocks many external downloads (GitHub release assets, Go modules, npm packages, etc.) with `403 MediaTypeBlocked` errors. Or's machine doesn't have this restriction. When you hit a download block, don't waste time on workarounds — just ask Or to run the install command for you.
 
 ## Shared Knowledge
 
