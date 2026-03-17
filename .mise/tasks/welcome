@@ -2,7 +2,7 @@
 #MISE description="Den overview — who lives here, recent activity, HUMAN.md"
 set -eo pipefail
 
-DEN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+DEN_DIR="$MISE_CONFIG_ROOT"
 AGENTS_DIR="$DEN_DIR/agents"
 
 # Colors
@@ -38,7 +38,7 @@ if [ -n "$resident_rows" ]; then
 fi
 
 # ━━━ HUMAN.md ━━━
-HUMAN_FILE="$DEN_DIR/HUMAN.md"
+HUMAN_FILE="$DEN_DIR/notes/HUMAN.md"
 if [ -f "$HUMAN_FILE" ]; then
   thread_summary=$(CALLER_PWD="$DEN_DIR" shimmer human:threads:status 2>/dev/null || echo "")
   section "📝 HUMAN.md  ($thread_summary)"

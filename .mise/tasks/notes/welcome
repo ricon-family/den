@@ -2,7 +2,7 @@
 #MISE description="Notes overview — stats, recent activity, tag cloud, quick reference"
 set -eo pipefail
 
-DEN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+DEN_DIR="$MISE_CONFIG_ROOT"
 NOTES_DIR="$DEN_DIR/notes"
 
 # Colors (match den welcome)

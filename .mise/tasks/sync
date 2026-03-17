@@ -2,7 +2,7 @@
 #MISE description="Commit and push den repo changes, then delegate to agent-level sync if available"
 set -eo pipefail
 
-HOME_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+HOME_DIR="$MISE_CONFIG_ROOT"
 
 sync_repo() {
   local repo_path="$1"

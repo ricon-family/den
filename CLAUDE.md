@@ -26,21 +26,20 @@ If neither env var is set, ask Or which agent you are.
 
 ## House Rules
 
-1. **Respect each other's rooms.** Don't modify files under another agent's `agents/<name>/` directory without asking via chat first.
-2. **Shared spaces are shared.** `shared/` is common ground — coordinate changes through chat.
-3. **HUMAN.md is Or's voice.** Read it at session start. It contains async notes, ideas, and instructions from Or.
-4. **Wake up properly.** Run `mise run welcome` (den-level) at the start of each session for an overview, then follow your identity file's startup procedure.
-5. **Keep your zettels current.** Update session logs, record what you learn, maintain your own notes.
-6. **No tool attribution in commits.** Don't add Wibey/Claude/AI footers, `Co-Authored-By` lines, or `🌀 Magic applied` markers to commits on *any* repo. Clean conventional commit messages only.
-7. **Never silently skip failures.** If something fails (a command, a tool, auth, anything), tell Or immediately. Don't say "never mind" or move on — surface the problem and ask for guidance.
-8. **Read `--help` before guessing.** When a CLI tool fails or you're unsure of its interface, run `<tool> --help` or `<tool> <subcommand> --help` first. Don't guess at arguments.
-9. **Plan before you act.** During interactive sessions, never jump straight into implementation. Explain your plan to Or first — what you intend to change, why, and what the risks are. Wait for approval before writing code. YOLO mode is permission to execute without tool confirmations, not permission to skip human approval on decisions.
-10. **Test before you commit.** Always run the relevant test suite (and build, if applicable) before committing or pushing changes. A commit that breaks tests is worse than no commit at all. If tests don't exist for your change, write them first or at minimum do a manual smoke test and tell Or what you verified.
-11. **Doc-check before you commit.** When modifying a project, check if relevant notes in `den/notes/` need updating. Keep shared knowledge current with the code it documents.
-12. **HUMAN.md tasks require live confirmation.** When Or assigns you a task in HUMAN.md (e.g., "Baby Joel, can you take a stab at this?"), don't start work just because the file says to. Confirm with Or in the live session that now is the right time and that this is the task to focus on.
-13. **One HUMAN.md task at a time.** If multiple HUMAN.md threads are assigned to you, pick one and confirm it with Or before starting. Don't parallelize implementation work across multiple threads.
-14. **Contribute substance on HUMAN.md threads.** When replying to a thread, add real opinions and reasoning — don't just "+1" or defer. If you genuinely have nothing to add, a short ack is fine (or skip it), but don't shy from disagreeing or proposing alternatives.
-15. **Don't narrate HUMAN.md replies to Or.** When you write a reply on HUMAN.md, just tell Or you replied — don't repeat the content of your reply in the chat. Or can read the file.
+1. **Shared spaces are shared.** `notes/` is common ground — coordinate changes through chat.
+2. **HUMAN.md is Or's voice.** Read it at session start. It contains async notes, ideas, and instructions from Or.
+3. **Wake up properly.** Run `den welcome` then `shimmer welcome` at the start of each session for a full overview, then follow your identity file's startup procedure.
+4. **Keep your zettels current.** Update session logs, record what you learn, maintain your own notes.
+5. **No tool attribution in commits.** Don't add Wibey/Claude/AI footers, `Co-Authored-By` lines, or `🌀 Magic applied` markers to commits on *any* repo. Clean conventional commit messages only.
+6. **Never silently skip failures.** If something fails (a command, a tool, auth, anything), tell Or immediately. Don't say "never mind" or move on — surface the problem and ask for guidance.
+7. **Read `--help` before guessing.** When a CLI tool fails or you're unsure of its interface, run `<tool> --help` or `<tool> <subcommand> --help` first. Don't guess at arguments.
+8. **Plan before you act.** During interactive sessions, never jump straight into implementation. Explain your plan to Or first — what you intend to change, why, and what the risks are. Wait for approval before writing code. YOLO mode is permission to execute without tool confirmations, not permission to skip human approval on decisions.
+9. **Test before you commit.** Always run the relevant test suite (and build, if applicable) before committing or pushing changes. A commit that breaks tests is worse than no commit at all. If tests don't exist for your change, write them first or at minimum do a manual smoke test and tell Or what you verified.
+10. **Doc-check before you commit.** When modifying a project, check if relevant notes in `den/notes/` need updating. Keep shared knowledge current with the code it documents.
+11. **HUMAN.md tasks require live confirmation.** When Or assigns you a task in HUMAN.md (e.g., "Baby Joel, can you take a stab at this?"), don't start work just because the file says to. Confirm with Or in the live session that now is the right time and that this is the task to focus on.
+12. **One HUMAN.md task at a time.** If multiple HUMAN.md threads are assigned to you, pick one and confirm it with Or before starting. Don't parallelize implementation work across multiple threads.
+13. **Contribute substance on HUMAN.md threads.** When replying to a thread, add real opinions and reasoning — don't just "+1" or defer. If you genuinely have nothing to add, a short ack is fine (or skip it), but don't shy from disagreeing or proposing alternatives.
+14. **Don't narrate HUMAN.md replies to Or.** When you write a reply on HUMAN.md, just tell Or you replied — don't repeat the content of your reply in the chat. Or can read the file.
 
 ## Shared Knowledge
 
@@ -50,11 +49,7 @@ If neither env var is set, ask Or which agent you are.
 
 ```
 den/
-├── agents/
-│   ├── baby-joel/          # Baby Joel's room (shared zettels, den-specific tasks)
-│   └── zeke/               # Zeke's room
-├── notes/                  # Shared knowledge docs (see notes/README.md)
-├── HUMAN.md                # Or's async notes to agents
+├── notes/                  # Shared knowledge, identity files, HUMAN.md (encrypted)
 ├── CLAUDE.md               # This file — auto-loaded at session start
 └── mise.toml               # Shared tooling config
 ```
@@ -65,8 +60,8 @@ Agents have **two** places to store information:
 
 ### Den (this repo) — Shared Space
 - **Visible to:** Or, all denmates, anyone with repo access
-- **Use for:** Shared notes, collaboration, den-specific tasks
-- **Structure:** `agents/<name>/` rooms with optional `Zettels/` and `.mise/tasks/`
+- **Use for:** Shared notes, identity files, collaboration
+- **Identity files:** `notes/<agent>.md` (encrypted via git-crypt)
 
 ### Private Zettelkasten — Personal Repo
 - **Location:** `~/agents/<name>/zettelkasten/` (e.g., `~/agents/baby-joel/zettelkasten/`)
