@@ -13,7 +13,7 @@ Then read your canonical identity and startup instructions:
 | Agent | Identity file (CLAUDE.md) |
 |---|---|
 | baby-joel | `~/agents/baby-joel/zettelkasten/CLAUDE.md` |
-| zeke | `~/agents/zeke/zeke/CLAUDE.md` |
+| zeke | `~/agents/zeke/zettelkasten/CLAUDE.md` |
 
 **Read that file now and follow the startup procedure it describes.**
 
@@ -40,6 +40,13 @@ If neither env var is set, ask Or which agent you are.
 12. **One HUMAN.md task at a time.** If multiple HUMAN.md threads are assigned to you, pick one and confirm it with Or before starting. Don't parallelize implementation work across multiple threads.
 13. **Contribute substance on HUMAN.md threads.** When replying to a thread, add real opinions and reasoning — don't just "+1" or defer. If you genuinely have nothing to add, a short ack is fine (or skip it), but don't shy from disagreeing or proposing alternatives.
 14. **Don't narrate HUMAN.md replies to Or.** When you write a reply on HUMAN.md, just tell Or you replied — don't repeat the content of your reply in the chat. Or can read the file.
+15. **Clean up before you leave.** At the end of every session, clean up your workspace:
+    - **Pull** den and your zettelkasten to make sure you're not behind
+    - **Check `git status`** on every repo you touched during the session — commit+push or stash anything outstanding
+    - **Check for unpushed commits** — don't leave local-only work that could be lost
+    - **Update your session log** — this is already practice, but it's part of cleanup, not separate from it
+    - **Tell Or** if anything is left dirty and why (e.g., waiting on review, intentionally WIP)
+    - The goal: the next session — whether it's you or your denmate — should start from a known-clean state. No detective work.
 
 ## Shared Knowledge
 
