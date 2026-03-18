@@ -16,4 +16,9 @@ if file -b "$IDENTITY_FILE" 2>/dev/null | grep -q "data"; then
   exit 1
 fi
 
-cat "$IDENTITY_FILE"
+# Strip YAML frontmatter (--- ... ---) if present
+awk '
+  BEGIN { in_fm=0; past_fm=0 }
+  /^---$/ && !past_fm { in_fm = !in_fm; if (!in_fm) { past_fm=1 }; next }
+  !in_fm { past_fm=1; print }
+' "$IDENTITY_FILE"
