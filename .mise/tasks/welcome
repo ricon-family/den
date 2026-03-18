@@ -75,7 +75,8 @@ if [ -d "$CHAT_DATA_DIR" ]; then
     echo ""
     (
       printf 'Action\tCommand\n'
-      printf 'Read new messages\tchat read --for %s\n' "$_agent_lower"
+      printf 'Read new messages (all)\tchat read\n'
+      printf 'Read only @%s mentions\tchat read --for %s\n' "$_agent_lower" "$_agent_lower"
       printf 'Send a message\tchat send --from %s <msg>\n' "$_agent_lower"
       printf 'Wait until @mentioned\tchat wait --for %s\n' "$_agent_lower"
       printf 'Peek without marking read\tchat check --for %s\n' "$_agent_lower"
