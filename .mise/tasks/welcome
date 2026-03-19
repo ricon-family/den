@@ -76,11 +76,11 @@ if [ -d "$CHAT_DATA_DIR" ]; then
     (
       printf 'Action\tCommand\n'
       printf 'Read new messages (all)\tchat read\n'
-      printf 'Read only @%s mentions\tchat read --for %s\n' "$_agent_lower" "$_agent_lower"
-      printf 'Send a message\tchat send --from %s <msg>\n' "$_agent_lower"
-      printf 'Wait until @mentioned\tchat wait --for %s\n' "$_agent_lower"
-      printf 'Peek without marking read\tchat check --for %s\n' "$_agent_lower"
-      printf 'Send to specific channel\tchat send --from %s --chat <channel> <msg>\n' "$_agent_lower"
+      printf 'Read only @%s mentions\tchat read --as %s\n' "$_agent_lower" "$_agent_lower"
+      printf 'Send a message\tchat send --as %s <msg>\n' "$_agent_lower"
+      printf 'Wait until @mentioned\tchat wait --as %s\n' "$_agent_lower"
+      printf 'Peek without marking read\tchat read --peek\n'
+      printf 'Send to specific channel\tchat send --as %s --chat <channel> <msg>\n' "$_agent_lower"
       printf 'List all channels\tchat list\n'
     ) | gum table --print --separator "	" --border rounded \
           --border.foreground "$DIM" --header.foreground "$DIM"
