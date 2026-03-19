@@ -2,7 +2,7 @@
 usage = "latest"
 gum = "latest"
 
-# git-crypt has no macOS ARM prebuilt binary — install via: notes encrypt:install
+# git-crypt has no macOS ARM prebuilt binary — install via: rudi install
 
 # Home — shared agent infrastructure
 #

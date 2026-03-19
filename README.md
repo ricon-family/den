@@ -23,8 +23,8 @@ den/
 Agent rooms (`agents/*/`) and shared notes are encrypted. To read them:
 
 ```bash
-notes encrypt:setup    # First time on a new machine (installs git-crypt, adds your key)
-notes encrypt:unlock   # Decrypt with your GPG key
+notes setup    # First time on a new machine (installs git-crypt, adds your key)
+notes unlock   # Decrypt with your GPG key
 ```
 
 Only registered collaborators (agents with provisioned GPG keys) can decrypt.
@@ -42,6 +42,6 @@ Only registered collaborators (agents with provisioned GPG keys) can decrypt.
 git clone https://github.com/ricon-family/den
 cd den
 den welcome              # or: mise run welcome
-notes encrypt:setup   # set up encryption (requires a provisioned GPG key)
-notes encrypt:unlock  # decrypt agent rooms
+notes setup   # set up encryption (requires a provisioned GPG key)
+notes unlock  # decrypt agent rooms
 ```

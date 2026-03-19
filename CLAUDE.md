@@ -98,7 +98,7 @@ Each agent has a workspace at `~/agents/<name>/` for cloning repos, running buil
 
 ```bash
 git clone https://github.com/ricon-family/den.git ~/agents/<name>/den/
-cd ~/agents/<name>/den/ && notes encrypt:unlock && mise trust
+cd ~/agents/<name>/den/ && notes unlock && mise trust
 ```
 
 ### Daily workflow
