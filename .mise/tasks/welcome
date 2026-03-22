@@ -40,33 +40,15 @@ fi
 # ━━━ HUMAN.md ━━━
 HUMAN_FILE="$DEN_DIR/notes/HUMAN.md"
 if [ -f "$HUMAN_FILE" ]; then
-  thread_summary=$(CALLER_PWD="$DEN_DIR" shimmer human:threads:status 2>/dev/null || echo "")
+  thread_summary=$(cd "$DEN_DIR" && shimmer human:threads:status 2>/dev/null || echo "")
   section "📝 HUMAN.md  ($thread_summary)"
-  CALLER_PWD="$DEN_DIR" shimmer human:threads:list 2>/dev/null || true
+  (cd "$DEN_DIR" && shimmer human:threads:list 2>/dev/null || true)
 fi
 
 # ━━━ Chat ━━━
 section "💬 Chat"
-CHAT_DATA_DIR="${HOME}/.local/share/chat"
-if [ -d "$CHAT_DATA_DIR" ]; then
-  chat_rows=""
-  for chat_file in "$CHAT_DATA_DIR"/*.md; do
-    [ ! -f "$chat_file" ] && continue
-    channel=$(basename "$chat_file" .md)
-    last_msg=$({ grep '^### ' "$chat_file" || true; } | tail -1)
-    if [ -n "$last_msg" ]; then
-      msg_info=$(echo "$last_msg" | sed 's/^### //')
-      msg_count=$(grep -c '^### ' "$chat_file" || true)
-      chat_rows+="${channel},${msg_count},${msg_info}"$'\n'
-    fi
-  done
-  if [ -n "$chat_rows" ]; then
-    printf "Channel,Msgs,Last Activity\n%s" "$chat_rows" \
-      | gum table --print --separator "," --border rounded \
-          --border.foreground "$DIM" --header.foreground "$SUBHEAD"
-  else
-    gum style --faint "(no messages in any channel)"
-  fi
+if command -v chat &>/dev/null; then
+  chat list 2>/dev/null || gum style --faint "(no chat channels)"
 
   # Quick reference — detect agent name from env (set by shimmer)
   _agent="${AGENT_NAME:-${GIT_AUTHOR_NAME:-}}"
@@ -92,40 +74,9 @@ fi
 # ━━━ Notes ━━━
 NOTES_DIR="$DEN_DIR/notes"
 if [ -d "$NOTES_DIR" ]; then
-  note_count=0
-  recent_notes=""
-  for f in "$NOTES_DIR"/*.md; do
-    [ ! -f "$f" ] && continue
-    base=$(basename "$f")
-    [[ "$base" == "README.md" || "$base" == "graph.md" ]] && continue
-    note_count=$((note_count + 1))
-
-    # Parse title and date from frontmatter
-    _title="" _updated="" _created="" _in_fm=false
-    while IFS= read -r line; do
-      if [[ "$line" == "---" ]]; then
-        if $_in_fm; then break; else _in_fm=true; continue; fi
-      fi
-      $_in_fm || continue
-      case "$line" in
-        title:*)   _title="${line#title: }" ; _title="${_title#\"}" ; _title="${_title%\"}" ;;
-        updated:*) _updated="${line#updated: }" ;;
-        created:*) _created="${line#created: }" ;;
-      esac
-    done < "$f"
-
-    _date="${_updated:-$_created}"
-    [ -z "$_title" ] && [ -z "$_date" ] && continue
-    _display="${_title:-$base}"
-    [ -n "$_date" ] && recent_notes+="${_date}	${_display}"$'\n'
-  done
-
+  note_count=$(cd "$DEN_DIR" && notes list -- --json 2>/dev/null | python3 -c "import sys, json; print(len(json.load(sys.stdin)))" 2>/dev/null || echo "?")
   section "📓 Notes  (${note_count} notes — run $(gum style --bold 'den notes:welcome') for full overview)"
-  if [ -n "$recent_notes" ]; then
-    printf "Updated\tNote\n%s" "$(echo -n "$recent_notes" | sort -r | head -5)" \
-      | gum table --print --separator "	" --border rounded \
-          --border.foreground "$DIM" --header.foreground "$SUBHEAD"
-  fi
+  (cd "$DEN_DIR" && notes list -- --recent 5 2>/dev/null || true)
 fi
 
 # ━━━ Repo & Status ━━━
