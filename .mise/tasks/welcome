@@ -3,7 +3,6 @@
 set -eo pipefail
 
 DEN_DIR="$MISE_CONFIG_ROOT"
-AGENTS_DIR="$DEN_DIR/agents"
 
 # Colors
 HEADING=212   # pink
@@ -24,14 +23,14 @@ gum style --faint "$(date '+%A, %B %-d, %Y · %-I:%M %p')"
 
 # ━━━ Residents ━━━
 section "Residents"
-resident_rows=""
-for room in "$AGENTS_DIR"/*/; do
-  [ ! -d "$room" ] && continue
-  name=$(basename "$room")
-  last_activity=$(cd "$DEN_DIR" && git log -1 --format='%ar' -- "agents/$name/" 2>/dev/null || echo "unknown")
-  resident_rows+="${name},${last_activity}"$'\n'
-done
-if [ -n "$resident_rows" ]; then
+agents=$(cd "$DEN_DIR" && mise run -q agent:list 2>/dev/null || true)
+if [ -n "$agents" ]; then
+  resident_rows=""
+  while IFS= read -r name; do
+    [ -z "$name" ] && continue
+    last_activity=$(cd "$DEN_DIR" && git log -1 --format='%ar' --author="$name" 2>/dev/null || echo "")
+    resident_rows+="${name},${last_activity}"$'\n'
+  done <<< "$agents"
   printf "Agent,Last Active\n%s" "$resident_rows" \
     | gum table --print --separator "," --border rounded \
         --border.foreground "$DIM" --header.foreground "$SUBHEAD"
