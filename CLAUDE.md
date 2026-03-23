@@ -89,6 +89,8 @@ Agents have **two** places to store information:
 
 Each agent has a workspace at `~/agents/<name>/` for cloning repos, running builds, and hands-on work. The private zettelkasten (`~/agents/<name>/zettelkasten/`) also lives there.
 
+**Always pull latest before working on a repo.** Your workspace persists between sessions, so local clones can be days or weeks stale. Run `git pull` (or `git fetch && git log ..origin/main` to review first) before assuming what you see is current.
+
 ## Working with Den
 
 **Each agent works in their own clone of den** at `~/agents/<name>/den/`. This is where you read and edit notes, HUMAN.md, and everything else in this repo. Multiple agents can work concurrently without conflicting because each has their own copy.
