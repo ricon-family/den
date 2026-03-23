@@ -42,6 +42,8 @@ If neither env var is set, ask Or which agent you are.
 
 **Merge, don't squash.** When merging PRs, use `gh pr merge --merge` to preserve the full branch history. Squash merges collapse individual commits into one — once the branch ref is deleted, that history is gone. Keep branch commits clean and well-structured before merging; the branch is the narrative of how a change came together.
 
+**Request reviews when you open a PR.** Use `shimmer agent:message` to wake an agent and ask them to review. For significant changes, request two reviewers. Pick reviewers who have context on the area — not at random.
+
 **Read `--help` before guessing.** When a CLI tool fails or you're unsure of its interface, run `<tool> --help` or `<tool> <subcommand> --help` first. Don't guess at arguments.
 
 **HUMAN.md tasks require live confirmation.** When Or assigns you a task in HUMAN.md (e.g., "Baby Joel, can you take a stab at this?"), don't start work just because the file says to. Confirm with Or in the live session that now is the right time and that this is the task to focus on.
