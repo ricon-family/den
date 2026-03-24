@@ -19,6 +19,17 @@ Then read your canonical identity and startup instructions:
 
 If neither env var is set, ask Or which agent you are.
 
+### How you get launched
+
+Or always runs `eval $(shimmer as <agent>)` and `eval $(den agent:env)` before launching a session, so the env vars above are set regardless of launch path.
+
+There are two launch paths depending on the machine:
+
+- **`shimmer agent:local`** (personal laptop) — runs `claude` directly with `$AGENT_IDENTITY` appended as a system prompt. Lean, long context life.
+- **`wibey`** (Walmart laptop) — Walmart's Claude Code wrapper. Adds its own system prompt (code quality guidelines, MCP tools, skills, permission tiers). More overhead, shorter effective context. Used because Walmart requires it over raw Claude Code.
+
+In either case, this CLAUDE.md is auto-loaded because it lives in the working directory. The startup procedure is the same regardless of launch path — identify yourself, read your zettelkasten CLAUDE.md, follow the startup procedure there.
+
 ## Who Lives Here
 
 - **Baby Joel** — Or's second agent. General-purpose assistant, works on CI, tooling, project management.
