@@ -18,14 +18,17 @@ on:
         required: true
         type: choice
         options:
+          - baby-joel
           - brownie
           - c0da
+          - ikma
           - johnson
           - junior
           - k7r2
           - quick
           - rho
           - x1f9
+          - zeke
       message:
         description: 'Message for the agent'
         required: true
