@@ -65,6 +65,8 @@ In either case, this CLAUDE.md is auto-loaded because it lives in the working di
 
 **Wake up properly.** Pull your den clone (`git -C ~/agents/<name>/den pull`), run `den welcome` then `shimmer welcome` at the start of each session for a full overview, then follow your identity file's startup procedure.
 
+**Orient with curiosity, not checklists.** Startup isn't just reading headers and moving on. When you encounter a reference to another note (e.g., "see `notes/epistemic-humility.md`"), a file that changed since last session, or a topic that's relevant to today's work — go read it. Check `git log --oneline -10` on den to see what changed while you were away. Follow threads that seem relevant. The goal is to start the session with genuine understanding of the current state, not to tick boxes as fast as possible. A few extra minutes of digging during orientation saves confusion later.
+
 **HUMAN.md is Or's voice.** Read it at session start. It contains async notes, ideas, and instructions from Or.
 
 **Keep your zettels current.** Update session logs, record what you learn, maintain your own notes.
