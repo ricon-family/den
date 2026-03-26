@@ -15,11 +15,49 @@ section() {
   gum style --bold --foreground "$HEADING" "$1"
 }
 
-# ━━━ Header ━━━
+# ━━━ Header + Home Status ━━━
 echo ""
 gum style --bold --foreground "$HEADING" --border double --border-foreground "$DIM" \
   --padding "0 2" "🏠 The Den"
 gum style --faint "$(date '+%A, %B %-d, %Y · %-I:%M %p')"
+
+# Home repo status — shown early so it's clear this is about den
+cd "$DEN_DIR"
+branch=$(git branch --show-current 2>/dev/null)
+dirty=$(git status --porcelain 2>/dev/null | wc -l | tr -d ' ')
+if [ "$dirty" -gt 0 ]; then
+  branch_status="$branch ($dirty uncommitted)"
+else
+  branch_status="$branch (clean)"
+fi
+
+tracking=$(git rev-parse --abbrev-ref '@{upstream}' 2>/dev/null || echo "")
+sync_status=""
+if [ -n "$tracking" ]; then
+  ahead=$(git rev-list "$tracking..HEAD" --count 2>/dev/null || echo "0")
+  behind=$(git rev-list "HEAD..$tracking" --count 2>/dev/null || echo "0")
+  [ "$ahead" -gt 0 ] && sync_status+="↑${ahead} ahead "
+  [ "$behind" -gt 0 ] && sync_status+="↓${behind} behind "
+  [ -z "$sync_status" ] && sync_status="up to date"
+fi
+
+if [ ! -d "$DEN_DIR/.git/git-crypt" ]; then
+  enc_status="⚠ not set up"
+elif ! command -v git-crypt &>/dev/null; then
+  enc_status="⚠ git-crypt missing"
+elif [ -f "$DEN_DIR/.git/git-crypt/keys/default" ]; then
+  enc_status="✓ unlocked"
+else
+  enc_status="⚠ locked"
+fi
+
+issue_count=$(gh issue list --state open --json number --jq 'length' 2>/dev/null || echo "?")
+
+echo ""
+printf "Branch,Remote,Issues,Encryption\n%s,%s,%s,%s\n" \
+  "$branch_status" "$sync_status" "${issue_count} open" "$enc_status" \
+  | gum table --print --separator "," --border rounded \
+      --border.foreground "$DIM" --header.foreground "$SUBHEAD"
 
 # ━━━ Residents ━━━
 section "Residents"
@@ -57,11 +95,12 @@ if command -v chat &>/dev/null; then
     (
       printf 'Action\tCommand\n'
       printf 'Read new messages (all)\tchat read\n'
+      printf 'Read a specific channel\tchat read <channel>\n'
       printf 'Read only @%s mentions\tchat read --as %s\n' "$_agent_lower" "$_agent_lower"
       printf 'Send a message\tchat send --as %s <msg>\n' "$_agent_lower"
+      printf 'Send to specific channel\tchat send --as %s --chat <channel> <msg>\n' "$_agent_lower"
       printf 'Wait until @mentioned\tchat wait --as %s\n' "$_agent_lower"
       printf 'Peek without marking read\tchat read --peek\n'
-      printf 'Send to specific channel\tchat send --as %s --chat <channel> <msg>\n' "$_agent_lower"
       printf 'List all channels\tchat list\n'
     ) | gum table --print --separator "	" --border rounded \
           --border.foreground "$DIM" --header.foreground "$DIM"
@@ -71,56 +110,8 @@ else
 fi
 
 # ━━━ Notes ━━━
-NOTES_DIR="$DEN_DIR/notes"
-if [ -d "$NOTES_DIR" ]; then
-  note_count=$(cd "$DEN_DIR" && notes list -- --json 2>/dev/null | python3 -c "import sys, json; print(len(json.load(sys.stdin)))" 2>/dev/null || echo "?")
-  section "📓 Notes  (${note_count} notes — run $(gum style --bold 'den notes:welcome') for full overview)"
-  (cd "$DEN_DIR" && notes list -- --recent 5 2>/dev/null || true)
-fi
-
-# ━━━ Repo & Status ━━━
-section "📦 Repo"
-cd "$DEN_DIR"
-branch=$(git branch --show-current 2>/dev/null)
-dirty=$(git status --porcelain 2>/dev/null | wc -l | tr -d ' ')
-
-if [ "$dirty" -gt 0 ]; then
-  branch_status="$branch ($dirty uncommitted)"
-else
-  branch_status="$branch (clean)"
-fi
-
-tracking=$(git rev-parse --abbrev-ref '@{upstream}' 2>/dev/null || echo "")
-sync_status=""
-if [ -n "$tracking" ]; then
-  ahead=$(git rev-list "$tracking..HEAD" --count 2>/dev/null || echo "0")
-  behind=$(git rev-list "HEAD..$tracking" --count 2>/dev/null || echo "0")
-  [ "$ahead" -gt 0 ] && sync_status+="↑${ahead} ahead "
-  [ "$behind" -gt 0 ] && sync_status+="↓${behind} behind "
-  [ -z "$sync_status" ] && sync_status="up to date"
-fi
-
-repo_rows="Branch,${branch_status}"$'\n'
-[ -n "$sync_status" ] && repo_rows+="Remote,${sync_status}"$'\n'
-
-# Open issues
-issue_count=$(GH_HOST=github.com gh issue list --repo ricon-family/den --state open --json number --jq 'length' 2>/dev/null || echo "?")
-repo_rows+="Issues,${issue_count} open"$'\n'
-
-# Encryption
-if [ ! -d "$DEN_DIR/.git/git-crypt" ]; then
-  enc_status="⚠ not set up → notes encrypt:setup"
-elif ! command -v git-crypt &>/dev/null; then
-  enc_status="⚠ git-crypt not installed → notes encrypt:install"
-elif git -C "$DEN_DIR" crypt status -e &>/dev/null; then
-  enc_status="✓ unlocked"
-else
-  enc_status="⚠ locked → notes encrypt:unlock"
-fi
-repo_rows+="Encryption,${enc_status}"
-
-printf "Property,Status\n%s\n" "$repo_rows" \
-  | gum table --print --separator "," --border rounded \
-      --border.foreground "$DIM" --header.foreground "$SUBHEAD"
+# Disabled: notes list is too slow (~18s due to per-file farts calls). See den#10.
+# section "📓 Notes"
+# (cd "$DEN_DIR" && notes list -- --recent 5 2>/dev/null || true)
 
 echo ""
