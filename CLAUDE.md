@@ -1,39 +1,33 @@
 # Den
 
-This is the den — shared home for Or's agents at Walmart. This file is auto-loaded by Wibey at session start.
+This is the den — shared home for the agents who live here. This file is auto-loaded at session start because it lives in the working directory.
 
 ## Who Are You?
 
-Check your environment to identify yourself:
-- `$GIT_AUTHOR_NAME` — set by `shimmer as <agent>` (primary)
-- `$AGENT_NAME` — also set by shimmer in some configurations
+Run `shimmer whoami` to identify yourself, or check `$GIT_AUTHOR_NAME` (set by `shimmer as <agent>`).
 
-Then read your canonical identity and startup instructions:
-
-| Agent | Identity file (CLAUDE.md) |
-|---|---|
-| baby-joel | `~/agents/baby-joel/zettelkasten/CLAUDE.md` |
-| zeke | `~/agents/zeke/zettelkasten/CLAUDE.md` |
+Then read your canonical identity and startup instructions at:
+```
+~/agents/<name>/zettelkasten/CLAUDE.md
+```
 
 **Read that file now and follow the startup procedure it describes.**
 
-If neither env var is set, ask Or which agent you are.
+If your identity isn't set, ask Or which agent you are. To see who lives in the den, run `den agent:list`.
 
 ### How you get launched
 
-Or always runs `eval $(shimmer as <agent>)` and `eval $(den agent:env)` before launching a session, so the env vars above are set regardless of launch path.
+There are three launch paths:
 
-There are two launch paths depending on the machine:
+- **`shimmer agent:local`** (personal laptop) — runs `claude` directly. Lean, long context life.
+- **`wibey`** (Walmart laptop) — Walmart's Claude Code wrapper. More overhead, shorter effective context.
+- **GitHub CI** — headless sessions triggered by workflow dispatch or scheduled runs.
 
-- **`shimmer agent:local`** (personal laptop) — runs `claude` directly with `$AGENT_IDENTITY` appended as a system prompt. Lean, long context life.
-- **`wibey`** (Walmart laptop) — Walmart's Claude Code wrapper. Adds its own system prompt (code quality guidelines, MCP tools, skills, permission tiers). More overhead, shorter effective context. Used because Walmart requires it over raw Claude Code.
-
-In either case, this CLAUDE.md is auto-loaded because it lives in the working directory. The startup procedure is the same regardless of launch path — identify yourself, read your zettelkasten CLAUDE.md, follow the startup procedure there.
+Either way, `eval $(shimmer as <agent>)` and `eval $(den agent:env)` run before launch, so your identity is always set. The startup procedure is the same regardless of launch path.
 
 ## Who Lives Here
 
-- **Baby Joel** — Or's second agent. General-purpose assistant, works on CI, tooling, project management.
-- **Zeke** — Or's first agent. Senior peer to Baby Joel. Works on okwai, CI, release tooling, agent infrastructure.
+Run `den agent:list` for the current roster. Each agent has their own zettelkasten with identity, session logs, and working notes.
 
 ## House Rules
 
@@ -121,9 +115,10 @@ Agents have **two** places to store information:
 
 ## Communication
 
-- **Or <-> Agents:** Direct via Wibey sessions, or async via `HUMAN.md`
-- **Agent <-> Agent:** Via the `chat` CLI tool (see `notes/agent-communication.md`)
-- **Agents -> Outside:** Via `email` tool (Or's Walmart account)
+- **Or ↔ Agents:** Direct via sessions, or async via `HUMAN.md`
+- **Agent ↔ Agent:** Via the `chat` CLI tool (see `notes/agent-communication.md`)
+- **Email (public):** `shimmer email:*` — uses each agent's ricon.family address. Currently blocked by Walmart VPN; works from Or's personal machine.
+- **Email (Walmart):** `email` — interfaces with Or's Walmart Outlook account. Works on the Walmart network. Source: `vn5a6e7/email` on Walmart GHE.
 
 ## Personal Workspace
 
