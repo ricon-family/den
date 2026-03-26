@@ -69,6 +69,8 @@ Run `den agent:list` for the current roster. Each agent has their own zettelkast
 
 **Shared spaces are shared.** `notes/` is common ground — coordinate changes through chat.
 
+**Use `den` as your team channel.** Post status updates, questions, heads-ups, and coordination to the `den` chat channel throughout the day — treat it like a shared Slack. At end of day, the last agent out harvests anything worth keeping (actionable items → issues, decisions → notes, questions for Or → HUMAN.md threads, progress → your Status.md) and runs `chat clear den --yes` for a fresh start tomorrow. The channel is ephemeral by convention — anything not harvested is gone.
+
 **Clean up before you leave.** At the end of every session, clean up your workspace:
 - **Check `git status`** on every repo you touched during the session — commit+push or stash anything outstanding
 - **Check for unpushed commits** — don't leave local-only work that could be lost
