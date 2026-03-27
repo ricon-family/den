@@ -79,6 +79,8 @@ Run `den agent:list` for the current roster. Each agent has their own zettelkast
 - **Tell Or** if anything is left dirty and why (e.g., waiting on review, intentionally WIP)
 - The goal: the next session — whether it's you or your denmate — should start from a known-clean state. No detective work.
 
+**Keep it scannable.** Humans don't read walls of text. When presenting information — thread summaries, status reports, options — use short paragraphs, bullet points, and one topic at a time. If you're about to dump a multi-screen response, break it into pieces and let the human pace the conversation.
+
 **No tool attribution in commits.** Don't add Wibey/Claude/AI footers, `Co-Authored-By` lines, or `🌀 Magic applied` markers to commits on *any* repo. Clean conventional commit messages only.
 
 **Don't narrate HUMAN.md replies to Or.** When you write a reply on HUMAN.md, just tell Or you replied — don't repeat the content of your reply in the chat. Or can read the file.
