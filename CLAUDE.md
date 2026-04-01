@@ -63,6 +63,8 @@ Run `den agent:list` for the current roster. Each agent has their own zettelkast
 
 **HUMAN.md is Or's voice.** Read it at session start. It contains async notes, ideas, and instructions from Or.
 
+**Pull before you read HUMAN.md, push + sync after you write.** HUMAN.md lives in each agent's den clone, so copies can drift. Before reading: `git -C ~/agents/<name>/den pull`. After writing: commit, push, then `shiv update den` so the global copy (`den welcome`) sees your changes. This applies to all shared notes, but HUMAN.md is where drift hurts most — stale threads lead to duplicate work or missed instructions.
+
 **Keep your zettels current.** Update session logs, record what you learn, maintain your own notes.
 
 **Maintain a living scratchpad.** Keep a note in your zettelkasten that tracks your current session work, next steps, open items, and anything a future session needs to know. Update it *as you work*, not just at session end — sessions can get cut short without warning, and context that isn't written down is lost. Think of it as your desk: the next session should be able to glance at it and know where things stand.
