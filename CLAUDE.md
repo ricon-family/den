@@ -111,6 +111,10 @@ Keep it short — bullet points, two sections, no prose. Or scans top to bottom 
 
 **Read `notes/README.md` at session start.** It's the index to shared documentation on projects, CI tooling, infrastructure, and conventions. If you're about to use a tool or work on a project, check the index first — there's probably a doc for it.
 
+## Creating New Codebases
+
+Before starting a new KnickKnackLabs tool, read **fold's `notes/creating-a-codebase.md`** — it's the single entry point for everything you need: mise conventions, BATS testing patterns, bash compatibility, README writing, releasing, and more. Access it at `~/agents/or/fold/notes/creating-a-codebase.md` (fold is available under Or's workspace alongside den).
+
 ## Structure
 
 ```
