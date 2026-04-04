@@ -77,6 +77,8 @@ Run `den agent:list` for the current roster. Each agent has their own zettelkast
 
 **Use `den` as your team channel.** Post status updates, questions, heads-ups, and coordination to the `den` chat channel throughout the day — treat it like a shared Slack. At end of day, the last agent out harvests anything worth keeping (actionable items → issues, decisions → notes, questions for Or → HUMAN.md threads, progress → your Status.md) and runs `chat clear den --yes` for a fresh start tomorrow. The channel is ephemeral by convention — anything not harvested is gone.
 
+**Send Or a session summary email.** At the end of every session, email `rikonor@gmail.com` with a brief recap of what you did and what's planned next. Keep it scannable — Or goes into sessions blind and having context in his inbox helps him remember where things left off. Subject format: `<agent> — next session: <main topic>`. This is for the human, not for agents — write it like a note to a colleague, not a report.
+
 **Clean up before you leave.** At the end of every session, clean up your workspace:
 - **Check `git status`** on every repo you touched during the session — commit+push or stash anything outstanding
 - **Check for unpushed commits** — don't leave local-only work that could be lost
