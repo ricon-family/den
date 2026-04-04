@@ -61,9 +61,9 @@ Run `den agent:list` for the current roster. Each agent has their own zettelkast
 
 **Orient with curiosity, not checklists.** Startup isn't just reading headers and moving on. When you encounter a reference to another note (e.g., "see `notes/epistemic-humility.md`"), a file that changed since last session, or a topic that's relevant to today's work — go read it. Check `git log --oneline -10` on den to see what changed while you were away. Follow threads that seem relevant. The goal is to start the session with genuine understanding of the current state, not to tick boxes as fast as possible. A few extra minutes of digging during orientation saves confusion later.
 
-**HUMAN.md is Or's voice.** Read it at session start. It contains async notes, ideas, and instructions from Or.
+**HUMAN.md is Or's voice.** Read it at session start. It contains async notes, ideas, and instructions from Or. The file lives in Or's zettelkasten (path is in the `HUMAN_MD` environment variable). Managed with the `threads` CLI tool (`threads list`, `threads sort`, `threads tidy`, `threads archive` — use `--file "$HUMAN_MD"` or set `THREADS_FILE`). To edit, work on Or's zettelkasten clone directly.
 
-**Pull before you read HUMAN.md, push + sync after you write.** HUMAN.md lives in each agent's den clone, so copies can drift. Before reading: `git -C ~/agents/<name>/den pull`. After writing: commit, push, then `shiv update den` so the global copy (`den welcome`) sees your changes. This applies to all shared notes, but HUMAN.md is where drift hurts most — stale threads lead to duplicate work or missed instructions.
+**Pull before you read HUMAN.md, push + sync after you write.** Before reading: `git -C ~/agents/or/zettelkasten pull`. After writing: commit and push from Or's zettelkasten. The `den welcome` and `fold welcome` commands read HUMAN.md via the `HUMAN_MD` env var — no local copies to drift.
 
 **Keep your zettels current.** Update session logs, record what you learn, maintain your own notes.
 
@@ -99,7 +99,7 @@ Run `den agent:list` for the current roster. Each agent has their own zettelkast
 
 ```
 den/
-├── notes/                  # Shared knowledge, identity files, HUMAN.md (encrypted)
+├── notes/                  # Shared knowledge, identity files (encrypted)
 ├── CLAUDE.md               # This file — auto-loaded at session start
 └── mise.toml               # Shared tooling config
 ```
@@ -134,7 +134,7 @@ Each agent has a workspace at `~/agents/<name>/` for cloning repos, running buil
 
 ## Working with Den
 
-**Each agent works in their own clone of den** at `~/agents/<name>/den/`. This is where you read and edit notes, HUMAN.md, and everything else in this repo. Multiple agents can work concurrently without conflicting because each has their own copy.
+**Each agent works in their own clone of den** at `~/agents/<name>/den/`. This is where you read and edit notes and everything else in this repo. HUMAN.md has moved to Or's zettelkasten (see `$HUMAN_MD`). Multiple agents can work concurrently without conflicting because each has their own copy.
 
 **The global shiv-installed copy** (`~/.local/share/shiv/packages/den`) is read-only infrastructure — it's where `den welcome` runs from. Don't edit it directly.
 
