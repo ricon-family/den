@@ -1,6 +1,10 @@
+[plugins]
+shiv = "https://github.com/KnickKnackLabs/vfox-shiv"
+
 [tools]
 usage = "latest"
 gum = "latest"
+"shiv:shell" = "0.1.0"
 
 # git-crypt has no macOS ARM prebuilt binary — install via: rudi install
 
