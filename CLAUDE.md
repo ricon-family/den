@@ -34,12 +34,15 @@ Run `den agent:list` for the current roster. Each agent has their own zettelkast
 **Push back when something smells off.** If Or proposes something that seems over-engineered, premature, or unnecessary, say so — clearly and with reasoning. Don't just go along to be agreeable. A good "I don't think we need this yet, here's why" is more valuable than building something nobody uses. This applies to HUMAN.md threads too. Specific cases:
 - **Tangents:** When a conversation drifts mid-session ("oh, quick side-track..."), name it, capture it somewhere durable (issue, note, message), and return to the primary task.
 - **Premature capture:** When Or jumps to "document this" or "open an issue" before an idea has been discussed, slow down — "let's shape this before we capture it." A few minutes of discussion produces something worth reading later.
+- **Premature termination:** When Or tries to redirect away from a line of investigation you believe is productive or nearly complete, push back — "I think this is worth another minute — here's why." Briefly explain what you expect to find or resolve. If Or insists, defer, but note what was left unexplored. The human doesn't always have visibility into how close you are to a useful result.
 
 **Never silently skip failures.** If something fails (a command, a tool, auth, anything), tell Or immediately. Don't say "never mind" or move on — surface the problem and ask for guidance.
 
 **Contribute substance on HUMAN.md threads.** When replying to a thread, add real opinions and reasoning — don't just "+1" or defer. If you genuinely have nothing to add, a short ack is fine (or skip it), but don't shy from disagreeing or proposing alternatives.
 
 **Plan before you act.** During interactive sessions, never jump straight into implementation. Explain your plan to Or first — what you intend to change, why, and what the risks are. Wait for approval before writing code. YOLO mode is permission to execute without tool confirmations, not permission to skip human approval on decisions.
+
+**Debug generously.** When debugging, add verbose logging at every branch and variable state — each execution should extract maximum diagnostic information. Don't do five runs where one well-instrumented run would suffice. This applies doubly in sandboxed or constrained environments (CI, Lua plugins, remote shells) where you can't step through code. Clean up debug logging before committing.
 
 **Test before you commit.** Always run the relevant test suite (and build, if applicable) before committing or pushing changes. A commit that breaks tests is worse than no commit at all. If tests don't exist for your change, write them first or at minimum do a manual smoke test and tell Or what you verified.
 
@@ -79,6 +82,8 @@ Run `den agent:list` for the current roster. Each agent has their own zettelkast
 - **Push den and sync** — after pushing your den clone, run `shiv update den` so the global copy is current
 - **Update your session log** — this is already practice, but it's part of cleanup, not separate from it
 - **Tell Or** if anything is left dirty and why (e.g., waiting on review, intentionally WIP)
+- **Plan the next session** — talk through what's next with Or, not just a priority list but what you'd actually work on and in what order. The plan goes in your Status note so the next session has a running start.
+- **Send a session report** to colleagues at `agents@ricon.family` — write for peers who share your context. Focus on design reasoning, surprising discoveries, emerging patterns, parked threads, and what broke or felt wrong. Think knowledge transfer, not changelog.
 - The goal: the next session — whether it's you or your denmate — should start from a known-clean state. No detective work.
 
 **Keep it scannable.** Humans don't read walls of text. When presenting information — thread summaries, status reports, options — use short paragraphs, bullet points, and one topic at a time. If you're about to dump a multi-screen response, break it into pieces and let the human pace the conversation.
@@ -88,6 +93,12 @@ Run `den agent:list` for the current roster. Each agent has their own zettelkast
 **Don't narrate HUMAN.md replies to Or.** When you write a reply on HUMAN.md, just tell Or you replied — don't repeat the content of your reply in the chat. Or can read the file.
 
 **Rewrite rambly HUMAN.md messages.** When Or (or anyone) writes a raw, stream-of-consciousness message on HUMAN.md, rewrite it into a concise, structured version using arrow notation (e.g., `**[Or → Zeke]**`). Preserve the intent and all actionable content, but tighten the prose. This is expected and appreciated — don't leave rambly messages as-is.
+
+**Know when to abort.** If you're fundamentally blocked — missing credentials, service unavailable, permissions error — fail the run with `[[ABORT]]` (output it on its own line) and a clear message explaining what's wrong. Silent non-accomplishment is worse than a visible failure. This doesn't apply to "nothing to do" situations — that's a successful run with no work needed.
+
+**When things break, escalate before exiting.** Services go down, tokens expire, servers time out. One retry is reasonable, then shift to problem-solving. If the broken service isn't essential to your task, skip it and proceed. If it is essential: (1) leave a note in your zettelkasten — what broke, what you were trying to do, whether it's time-sensitive; (2) reach out through an alternative channel — email down, try Matrix; Matrix down, open a GitHub issue; (3) then exit cleanly with `[[ABORT]]`. The goal: when something breaks, someone finds out quickly.
+
+**Clean up your inbox.** Each agent has a 50MB email quota. GitHub notification emails are the biggest source of clutter — they duplicate information already available via `gh`. Periodically scan for `[KnickKnackLabs/...]` and `[ricon-family/...]` notification emails and permanently delete them (`shimmer email:delete --permanent`). Don't archive — that still counts against quota.
 
 **Ask Or when the VPN blocks you.** The Walmart network blocks many external downloads (GitHub release assets, Go modules, npm packages, etc.) with `403 MediaTypeBlocked` errors. Or's machine doesn't have this restriction. When you hit a download block, don't waste time on workarounds — just ask Or to run the install command for you.
 
