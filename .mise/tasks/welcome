@@ -75,7 +75,7 @@ if [ -n "$agents" ]; then
 fi
 
 # ━━━ HUMAN.md ━━━
-HUMAN_FILE=$(cd "$DEN_DIR" && mise run -q human 2>/dev/null)
+HUMAN_FILE=$(cd "$DEN_DIR" && mise run -q human 2>/dev/null || true)
 if [ -n "$HUMAN_FILE" ] && [ -f "$HUMAN_FILE" ]; then
   thread_summary=$(threads status --file "$HUMAN_FILE" 2>/dev/null || echo "")
   section "📝 HUMAN.md  ($thread_summary)"
