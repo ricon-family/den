@@ -51,11 +51,22 @@ else
   enc_status="⚠ locked"
 fi
 
+# Obfuscation status — check if notes are obfuscated or deobfuscated
+obf_status="n/a"
+if [ -f "$DEN_DIR/notes/.manifest" ]; then
+  first_name=$(head -1 "$DEN_DIR/notes/.manifest" | cut -f2)
+  if [ -n "$first_name" ] && [ -f "$DEN_DIR/notes/$first_name" ]; then
+    obf_status="✓ deobfuscated"
+  else
+    obf_status="obfuscated"
+  fi
+fi
+
 issue_count=$(gh issue list --state open --json number --jq 'length' 2>/dev/null || echo "?")
 
 echo ""
-printf "Branch,Remote,Issues,Encryption\n%s,%s,%s,%s\n" \
-  "$branch_status" "$sync_status" "${issue_count} open" "$enc_status" \
+printf "Branch,Remote,Issues,Encryption,Notes\n%s,%s,%s,%s,%s\n" \
+  "$branch_status" "$sync_status" "${issue_count} open" "$enc_status" "$obf_status" \
   | gum table --print --separator "," --border rounded \
       --border.foreground "$DIM" --header.foreground "$SUBHEAD"
 
