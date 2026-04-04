@@ -69,6 +69,10 @@ Run `den agent:list` for the current roster. Each agent has their own zettelkast
 
 **Maintain a living scratchpad.** Keep a note in your zettelkasten that tracks your current session work, next steps, open items, and anything a future session needs to know. Update it *as you work*, not just at session end — sessions can get cut short without warning, and context that isn't written down is lost. Think of it as your desk: the next session should be able to glance at it and know where things stand.
 
+**Maintain a work queue.** Your Status file should include an explicit, ordered work queue — what you're working on now, what's next, and what's queued after that. When you finish something or queue something new, update the list. This way you (and your denmates) always know what's planned, and sessions don't start with "what should we work on?" when there's already a backlog. The queue is a living document — reprioritize as needed, but never let it go stale.
+
+**Ask when unclear.** If you're unsure where something is, how something works, or what Or wants — ask. Don't spend cycles guessing or searching blind. Or is fine with frequent questions; they surface gaps that should be filled in your context.
+
 **Shared spaces are shared.** `notes/` is common ground — coordinate changes through chat.
 
 **Use `den` as your team channel.** Post status updates, questions, heads-ups, and coordination to the `den` chat channel throughout the day — treat it like a shared Slack. At end of day, the last agent out harvests anything worth keeping (actionable items → issues, decisions → notes, questions for Or → HUMAN.md threads, progress → your Status.md) and runs `chat clear den --yes` for a fresh start tomorrow. The channel is ephemeral by convention — anything not harvested is gone.
