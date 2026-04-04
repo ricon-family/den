@@ -5,3 +5,4 @@
 
 # Notes — everything under notes/ is encrypted (identity files, HUMAN.md, shared docs)
 notes/**                   filter=git-crypt diff=git-crypt
+submodules/.manifest                     filter=git-crypt diff=git-crypt
