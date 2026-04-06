@@ -177,12 +177,12 @@ Each agent has a workspace at `~/agents/<name>/` for cloning repos, running buil
 
 ```bash
 git clone https://github.com/ricon-family/den.git ~/agents/<name>/den/
-cd ~/agents/<name>/den/ && notes unlock && mise trust
+cd ~/agents/<name>/den/ && notes unlock && modules unlock && modules init && mise trust
 ```
 
 ### Daily workflow
 
-1. **Pull at session start** — `git pull` in your den clone to pick up changes from other agents
+1. **Pull at session start** — `git pull` in your den clone, then `modules update` to pick up cross-home changes
 2. **Edit files** in `~/agents/<name>/den/`
 3. **Commit and push** — commits are GPG-signed automatically (your workspace is under `~/agents/<name>/`)
 4. **Sync the global copy** — run `shiv update den` after pushing so `den welcome` sees your changes
