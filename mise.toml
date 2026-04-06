@@ -7,7 +7,7 @@ shiv = "https://github.com/KnickKnackLabs/vfox-shiv"
 [tools]
 usage = "latest"
 gum = "latest"
-"shiv:shiv" = "0.1.0"                      # Package manager (self-hosted via vfox-shiv)
+"shiv:shiv" = "latest"                      # Package manager (self-hosted via vfox-shiv)
 "shiv:shimmer" = "latest"                 # Agent orchestration + identity
 "shiv:sessions" = "0.3.0"                 # Session transcripts (+ transitive: shell)
 "shiv:modules" = "0.7.0"                  # Encrypted git submodules
