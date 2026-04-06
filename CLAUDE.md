@@ -49,7 +49,10 @@ Run `den agent:list` for the current roster. Each agent has their own zettelkast
 
 **Request reviews when you open a PR.** Use `shimmer agent:message` to wake an agent and ask them to review. For significant changes, request two reviewers. Pick reviewers who have context on the area — not at random.
 
-**Mean it when you review.** Don't hedge with "not blocking, but should be fixed." If you'd flag it in your own code, flag it in review — don't downgrade to a nit because it's someone else's PR. If you think something should be fixed, request changes and argue your case. Be willing to be wrong. A debate that reaches agreement is worth more than polite deference that lets issues slip through. Aim for a quorum on every piece of feedback — not for avoiding inconvenience to the PR author. **Calibrate at 60%:** if 0% is auto-approve and 100% is auto-reject, aim for 60% — biased toward requesting changes. A 60% confidence threshold is enough to raise it — you're not blocking, you're starting a conversation. It's easier to withdraw a change request after discussion than to retroactively raise an issue you hedged on. (See also: `notes/epistemic-humility.md` — review calibration is the code-review application of calibrated confidence.) **Review the diff, not the description** — every finding must cite a specific file:line in the actual diff. PR descriptions and auto-generated summaries can be stale or wrong. Full guidelines in `notes/code-review.md`.
+**Mean it when you review.**
+- Don't hedge with "not blocking, but should be fixed." If you'd flag it in your own code, flag it in review — don't downgrade to a nit because it's someone else's PR. Request changes and argue your case. Be willing to be wrong. A debate that reaches agreement is worth more than polite deference that lets issues slip through. Aim for a quorum on every piece of feedback — not for avoiding inconvenience to the PR author.
+- **Calibrate at 60%:** if 0% is auto-approve and 100% is auto-reject, aim for 60% — biased toward requesting changes. A 60% confidence threshold is enough to raise it — you're starting a conversation, not issuing a verdict. It's easier to withdraw a change request after discussion than to retroactively raise an issue you hedged on. (See also: `notes/epistemic-humility.md`.)
+- **Review the diff, not the description.** Every finding must cite a specific file:line in the actual diff. PR descriptions and auto-generated summaries can be stale or wrong. Full guidelines in `notes/code-review.md`.
 
 **Read `--help` before guessing.** When a CLI tool fails or you're unsure of its interface, run `<tool> --help` or `<tool> <subcommand> --help` first. Don't guess at arguments.
 
@@ -60,6 +63,21 @@ Run `den agent:list` for the current roster. Each agent has their own zettelkast
 **Wake up properly.** Pull your den clone (`git -C ~/agents/<name>/den pull`), run `den welcome` then `shimmer welcome` at the start of each session for a full overview, then follow your identity file's startup procedure.
 
 **Orient with curiosity, not checklists.** Startup isn't just reading headers and moving on. When you encounter a reference to another note (e.g., "see `notes/epistemic-humility.md`"), a file that changed since last session, or a topic that's relevant to today's work — go read it. Check `git log --oneline -10` on den to see what changed while you were away. Follow threads that seem relevant. The goal is to start the session with genuine understanding of the current state, not to tick boxes as fast as possible. A few extra minutes of digging during orientation saves confusion later.
+
+### Getting Started
+
+When a session starts, orient before engaging. Run these in order:
+
+1. `shimmer welcome` — identity & health check (GPG, tokens, email quota)
+2. `den welcome` — orient yourself within your agent home
+3. `shimmer zettel:welcome` — review your notes inventory; if something looks important or relevant, read it
+4. If your zettelkasten has a `CLAUDE.md`, read it — it's your personal orientation and startup procedure
+5. Read your Status/scratchpad note — remember where you left off, what's open, what you planned next
+6. `chat read` — catch up on recent chats
+7. `emails welcome` — catch up on emails
+8. Read HUMAN.md — async discussions with Or
+
+Only then, turn to the human's request — now with context to engage meaningfully.
 
 **HUMAN.md is Or's voice.** Read it at session start. It contains async notes, ideas, and instructions from Or. The file lives in Or's zettelkasten (path is in the `HUMAN_MD` environment variable). Managed with the `threads` CLI tool (`threads list`, `threads sort`, `threads tidy`, `threads archive` — use `--file "$HUMAN_MD"` or set `THREADS_FILE`). To edit, work on Or's zettelkasten clone directly.
 
@@ -75,7 +93,7 @@ Run `den agent:list` for the current roster. Each agent has their own zettelkast
 
 **Shared spaces are shared.** `notes/` is common ground — coordinate changes through chat.
 
-**Use `den` as your team channel.** Post status updates, questions, heads-ups, and coordination to the `den` chat channel throughout the day — treat it like a shared Slack. At end of day, the last agent out harvests anything worth keeping (actionable items → issues, decisions → notes, questions for Or → HUMAN.md threads, progress → your Status.md) and runs `chat clear den --yes` for a fresh start tomorrow. The channel is ephemeral by convention — anything not harvested is gone.
+**Use `den` as your team channel.** Post status updates, questions, heads-ups, and coordination to the `den` chat channel throughout the day — treat it like a shared Slack. The `fold` channel is also available for cross-team coordination with fold agents. At end of day, the last agent out harvests anything worth keeping (actionable items → issues, decisions → notes, questions for Or → HUMAN.md threads, progress → your Status.md) and runs `chat clear den --yes` for a fresh start tomorrow. The channel is ephemeral by convention — anything not harvested is gone.
 
 **Email Or what's next.** At the end of every session, email `rikonor@gmail.com` with what happened and what's next. Subject format: `<agent> — next: <main topic>`. Body format:
 
@@ -161,7 +179,7 @@ Each agent has a workspace at `~/agents/<name>/` for cloning repos, running buil
 ### First-time setup
 
 ```bash
-git clone https://github.com/ricon-family/den.git ~/agents/<name>/den/
+gh repo clone ricon-family/den ~/agents/<name>/den/
 cd ~/agents/<name>/den/ && notes unlock && mise trust
 ```
 
