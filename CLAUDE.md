@@ -113,16 +113,28 @@ Keep it short — bullet points, two sections, no prose. Or scans top to bottom 
 
 ## Creating New Codebases
 
-Before starting a new KnickKnackLabs tool, read **fold's `notes/creating-a-codebase.md`** — it's the single entry point for everything you need: mise conventions, BATS testing patterns, bash compatibility, README writing, releasing, and more. Access it at `~/agents/or/fold/notes/creating-a-codebase.md` (fold is available under Or's workspace alongside den).
+Before starting a new KnickKnackLabs tool, read **fold's `notes/creating-a-codebase.md`** — it's the single entry point for everything you need: mise conventions, BATS testing patterns, bash compatibility, README writing, releasing, and more. Access it via den's fold submodule (run `modules init` first if `submodules/` is empty).
 
 ## Structure
 
 ```
 den/
 ├── notes/                  # Shared knowledge, identity files (encrypted)
+├── submodules/             # Cross-home references (encrypted manifest)
 ├── CLAUDE.md               # This file — auto-loaded at session start
 └── mise.toml               # Shared tooling config
 ```
+
+## Cross-Home Access
+
+Den and fold reference each other as encrypted submodules. After unlocking notes, run `modules init` to populate them:
+
+```bash
+notes unlock      # decrypts notes
+modules init      # clones cross-home repos into submodules/
+```
+
+This gives you read access to fold's notes (and fold agents get access to den's). See `notes/cross-repo-modules-integration.md` for details on updating pins and how encryption works.
 
 ## Architecture: Den vs Private Zettelkasten
 
