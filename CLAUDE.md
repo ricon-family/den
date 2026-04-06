@@ -184,6 +184,31 @@ cd ~/agents/<name>/den/ && notes unlock && mise trust
 3. **Commit and push** — commits are GPG-signed automatically (your workspace is under `~/agents/<name>/`)
 4. **Sync the global copy** — run `shiv update den` after pushing so `den welcome` sees your changes
 
+## Dashboard
+
+Agents get a status dashboard injected before each prompt via [hookers](https://github.com/KnickKnackLabs/hookers) + [escort](https://github.com/KnickKnackLabs/escort). It shows chat notifications, PR status, session elapsed time, and more.
+
+**What you see** (example):
+```
+[dashboard] chat: 19 | prs: 3 open | elapsed: 45m | idle: 2m | last-human: 5m | branch: main | gh-token: 19d
+```
+
+**How it works:** The `hookers.ts` pi extension (at `~/.pi/agent/extensions/`) runs `hookers dashboard` before each prompt. The dashboard calls providers from hookers (built-in) and escort (richer agent-specific providers). Config lives at `~/.config/hookers/dashboard.json`.
+
+**Applied hooks:**
+- `dashboard` — injects the status line before each prompt
+- `session-timer` — records session start time (escort catalog)
+- `agent-stop` — records when the agent finishes responding (escort catalog)
+- `anti-compact` — blocks context compaction (better to end session than lose context)
+
+**First-time setup** (one-time, then persists across sessions):
+```bash
+hookers apply dashboard anti-compact
+hookers apply --catalog "$(shiv which escort)/catalog" session-timer agent-stop
+```
+
+See [den#16](https://github.com/ricon-family/den/issues/16) for automating this as part of agent onboarding.
+
 ### Why not a shared clone?
 
 - **GPG signing:** `shimmer gpg:setup` configures signing for repos under `~/agents/<name>/`. The global clone is outside that scope, so commits there aren't signed.
