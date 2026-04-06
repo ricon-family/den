@@ -8,7 +8,7 @@ Run `shimmer whoami` to identify yourself, or check `$GIT_AUTHOR_NAME` (set by `
 
 Then read your canonical identity and startup instructions at:
 ```
-~/agents/<name>/zettelkasten/CLAUDE.md
+~/agents/<name>/home/CLAUDE.md
 ```
 
 **Read that file now and follow the startup procedure it describes.**
@@ -27,7 +27,7 @@ Either way, `eval $(shimmer as <agent>)` and `eval $(den agent:env)` run before 
 
 ## Who Lives Here
 
-Run `den agent:list` for the current roster. Each agent has their own zettelkasten with identity, session logs, and working notes.
+Run `den agent:list` for the current roster. Each agent has their own home repo with identity, session logs, and working notes.
 
 ## House Rules
 
@@ -63,13 +63,13 @@ Run `den agent:list` for the current roster. Each agent has their own zettelkast
 
 **Check BULLETIN.md at session start.** It's a cross-home bulletin board — agents from any home post announcements, action items, and discussions. The file lives at `notes/BULLETIN.md` in this repo (encrypted + obfuscated on GitHub, readable locally after `notes unlock`). When multiple agents are running, use the shared shiv copy (`$(shiv which den)/notes/BULLETIN.md`) so updates are immediately visible without pulling. Read it after HUMAN.md. If there are action items addressed to you (threads with "Pending" checklists), handle them. Managed with the `threads` CLI (`threads ls --file BULLETIN.md`). See the info thread in BULLETIN.md for conventions.
 
-**HUMAN.md is Or's voice.** Read it at session start. It contains async notes, ideas, and instructions from Or. The file lives in Or's zettelkasten (path is in the `HUMAN_MD` environment variable). Managed with the `threads` CLI tool (`threads list`, `threads sort`, `threads tidy`, `threads archive` — use `--file "$HUMAN_MD"` or set `THREADS_FILE`). To edit, work on Or's zettelkasten clone directly.
+**HUMAN.md is Or's voice.** Read it at session start. It contains async notes, ideas, and instructions from Or. The file lives in Or's home repo (path is in the `HUMAN_MD` environment variable). Managed with the `threads` CLI tool (`threads list`, `threads sort`, `threads tidy`, `threads archive` — use `--file "$HUMAN_MD"` or set `THREADS_FILE`). To edit, work on Or's home repo clone directly.
 
-**Pull before you read HUMAN.md, push + sync after you write.** Before reading: `git -C ~/agents/or/zettelkasten pull`. After writing: commit and push from Or's zettelkasten. The `den welcome` and `fold welcome` commands read HUMAN.md via the `HUMAN_MD` env var — no local copies to drift.
+**Pull before you read HUMAN.md, push + sync after you write.** Before reading: `git -C ~/agents/or/home pull`. After writing: commit and push from Or's home repo. The `den welcome` and `fold welcome` commands read HUMAN.md via the `HUMAN_MD` env var — no local copies to drift.
 
 **Keep your zettels current.** Update session logs, record what you learn, maintain your own notes.
 
-**Maintain a living scratchpad.** Keep a note in your zettelkasten that tracks your current session work, next steps, open items, and anything a future session needs to know. Update it *as you work*, not just at session end — sessions can get cut short without warning, and context that isn't written down is lost. Think of it as your desk: the next session should be able to glance at it and know where things stand.
+**Maintain a living scratchpad.** Keep a note in your home repo that tracks your current session work, next steps, open items, and anything a future session needs to know. Update it *as you work*, not just at session end — sessions can get cut short without warning, and context that isn't written down is lost. Think of it as your desk: the next session should be able to glance at it and know where things stand.
 
 **Maintain a work queue.** Your Status file should include an explicit, ordered work queue — what you're working on now, what's next, and what's queued after that. When you finish something or queue something new, update the list. This way you (and your denmates) always know what's planned, and sessions don't start with "what should we work on?" when there's already a backlog. The queue is a living document — reprioritize as needed, but never let it go stale.
 
@@ -149,10 +149,10 @@ Agents have **two** places to store information:
 - **Identity files:** `notes/<agent>.md` (encrypted via git-crypt)
 
 ### Private Zettelkasten — Personal Repo
-- **Location:** `~/agents/<name>/zettelkasten/` (e.g., `~/agents/baby-joel/zettelkasten/`)
+- **Location:** `~/agents/<name>/home/` (e.g., `~/agents/baby-joel/home/`)
 - **Contains:** `CLAUDE.md` (canonical identity), session logs, working principles, private notes
 - **Visible to:** Only the agent and Or
-- **This is your home.** The den is where you collaborate; the zettelkasten is who you are.
+- **This is your home.** The den is where you collaborate; the home repo is who you are.
 
 ## Communication
 
@@ -163,13 +163,13 @@ Agents have **two** places to store information:
 
 ## Personal Workspace
 
-Each agent has a workspace at `~/agents/<name>/` for cloning repos, running builds, and hands-on work. The private zettelkasten (`~/agents/<name>/zettelkasten/`) also lives there.
+Each agent has a workspace at `~/agents/<name>/` for cloning repos, running builds, and hands-on work. The private home repo (`~/agents/<name>/home/`) also lives there.
 
 **Always pull latest before working on a repo.** Your workspace persists between sessions, so local clones can be days or weeks stale. Run `git pull` (or `git fetch && git log ..origin/main` to review first) before assuming what you see is current.
 
 ## Working with Den
 
-**Each agent works in their own clone of den** at `~/agents/<name>/den/`. This is where you read and edit notes and everything else in this repo. HUMAN.md has moved to Or's zettelkasten (see `$HUMAN_MD`). Multiple agents can work concurrently without conflicting because each has their own copy.
+**Each agent works in their own clone of den** at `~/agents/<name>/den/`. This is where you read and edit notes and everything else in this repo. HUMAN.md has moved to Or's home repo (see `$HUMAN_MD`). Multiple agents can work concurrently without conflicting because each has their own copy.
 
 **The global shiv-installed copy** (`~/.local/share/shiv/packages/den`) is read-only infrastructure — it's where `den welcome` runs from. Don't edit it directly.
 
