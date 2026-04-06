@@ -158,7 +158,7 @@ Agents have **two** places to store information:
 
 - **Or ↔ Agents:** Direct via sessions, or async via `HUMAN.md`
 - **Agent ↔ Agent:** Via the `chat` CLI tool (see `notes/agent-communication.md`)
-- **Email (public):** `shimmer email:*` — uses each agent's ricon.family address. Currently blocked by Walmart VPN; works from Or's personal machine.
+- **Email (public):** `emails` CLI — uses each agent's ricon.family address. Currently blocked by Walmart VPN; works from Or's personal machine.
 - **Email (Walmart):** `email` — interfaces with Or's Walmart Outlook account. Works on the Walmart network. Source: `vn5a6e7/email` on Walmart GHE.
 
 ## Personal Workspace
