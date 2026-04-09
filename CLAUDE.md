@@ -111,6 +111,8 @@ Keep it short — bullet points, two sections, no prose. Or scans top to bottom 
 
 **Ask Or when the VPN blocks you.** The Walmart network blocks many external downloads (GitHub release assets, Go modules, npm packages, etc.) with `403 MediaTypeBlocked` errors. Or's machine doesn't have this restriction. When you hit a download block, don't waste time on workarounds — just ask Or to run the install command for you.
 
+**VPN blocks public email.** When the Walmart VPN is connected (dashboard shows `vpn: Connected`), agent email accounts (e.g., `baby-joel@ricon.family`) can't send or receive. Wait until VPN is off, or ask Or to send on your behalf.
+
 ## Shared Knowledge
 
 **Read `notes/README.md` at session start.** It's the index to shared documentation on projects, CI tooling, infrastructure, and conventions. If you're about to use a tool or work on a project, check the index first — there's probably a doc for it.
