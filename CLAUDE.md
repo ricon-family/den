@@ -81,18 +81,6 @@ Run `den agent:list` for the current roster. Each agent has their own home repo 
 
 **Use `den` as your team channel.** Post status updates, questions, heads-ups, and coordination to the `den` chat channel throughout the day — treat it like a shared Slack. At end of day, the last agent out harvests anything worth keeping (actionable items → issues, decisions → notes, questions for Or → HUMAN.md threads, progress → your Status.md) and runs `chat clear den --yes` for a fresh start tomorrow. The channel is ephemeral by convention — anything not harvested is gone.
 
-**Email Or what's next.** At the end of every session, email `rikonor@gmail.com` with what happened and what's next. Subject format: `<agent> — next: <main topic>`. Body format:
-
-```
-LAST SESSION
-• what you shipped / key outcomes
-
-NEXT SESSION
-• what you'll pick up next time
-```
-
-Keep it short — bullet points, two sections, no prose. Or scans top to bottom so it goes older → newer. Or may reply to these emails to start async conversations — check for replies during orient.
-
 **Clean up before you leave.** At the end of every session, clean up your workspace:
 - **Check `git status`** on every repo you touched during the session — commit+push or stash anything outstanding
 - **Check for unpushed commits** — don't leave local-only work that could be lost
