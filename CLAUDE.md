@@ -193,13 +193,15 @@ cd ~/agents/<name>/den/ && notes unlock && modules unlock && modules init && mis
 
 ### Obfuscated notes and `git status`
 
-Note filenames are obfuscated on GitHub (e.g., `secret.md` → `a1b2c3d4`). Locally, after `notes unlock`, the working tree has readable names. This means **`git status` will always show noise** — obfuscated files appear as "deleted" and readable files as "untracked." This is expected and harmless. The pre-commit hook handles obfuscation automatically when you commit, and the post-commit/post-merge hooks restore readable names afterward.
+Note filenames are obfuscated on GitHub (e.g., `secret.md` → `a1b2c3d4`). Locally, after `notes unlock`, the working tree has readable names. **`git status` is clean** — readable names are hidden via `.git/info/exclude` and obfuscated IDs are suppressed via `assume-unchanged`.
 
-**What to expect:**
-- `git add notes/<readable-name>` then `git commit` — hooks handle the rest
-- `git pull` works — post-merge hook refreshes readable names
-- Don't run `git add -A` or `git add notes/` — this would stage the deobfuscated names
-- Ignore the `D`/`??` entries in `git status` for files under `notes/`
+**Editing workflow:**
+- Edit notes normally using their readable names
+- `notes changes` — see what you've modified (use `--summary` for just the file list)
+- `notes stage` — stage changed notes for commit (don't use `git add` — it won't work because of the exclude)
+- `git commit` — pre-commit hook obfuscates, post-commit hook deobfuscates
+- `git pull` works — post-merge hook deobfuscates after pull
+- Don't run `git add -A` or `git add notes/` — use `notes stage` instead
 
 ## Dashboard
 
