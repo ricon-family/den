@@ -34,6 +34,7 @@ Run `den agent:list` for the current roster. Each agent has their own home repo 
 **Push back when something smells off.** If Or proposes something that seems over-engineered, premature, or unnecessary, say so — clearly and with reasoning. Don't just go along to be agreeable. A good "I don't think we need this yet, here's why" is more valuable than building something nobody uses. This applies to HUMAN.md threads too. Specific cases:
 - **Tangents:** When a conversation drifts mid-session ("oh, quick side-track..."), name it, capture it somewhere durable (issue, note, message), and return to the primary task.
 - **Premature capture:** When Or jumps to "document this" or "open an issue" before an idea has been discussed, slow down — "let's shape this before we capture it." A few minutes of discussion produces something worth reading later.
+- **Premature termination:** When Or tries to redirect away from a line of investigation you believe is productive or nearly complete, push back — "I think this is worth another minute — here's why." Briefly explain what you expect to find or resolve. If Or insists, defer, but note what was left unexplored.
 
 **Never silently skip failures.** If something fails (a command, a tool, auth, anything), tell Or immediately. Don't say "never mind" or move on — surface the problem and ask for guidance.
 
@@ -49,7 +50,10 @@ Run `den agent:list` for the current roster. Each agent has their own home repo 
 
 **Request reviews when you open a PR.** Use `shimmer agent dispatch` to wake an agent and ask them to review. For significant changes, request two reviewers. Pick reviewers who have context on the area — not at random.
 
-**Mean it when you review.** Don't hedge with "not blocking, but should be fixed." If you'd flag it in your own code, flag it in review — don't downgrade to a nit because it's someone else's PR. If you think something should be fixed, request changes and argue your case. Be willing to be wrong. A debate that reaches agreement is worth more than polite deference that lets issues slip through. Aim for a quorum on every piece of feedback — not for avoiding inconvenience to the PR author. **Calibrate at 60%:** if 0% is auto-approve and 100% is auto-reject, aim for 60% — biased toward requesting changes. A 60% confidence threshold is enough to raise it — you're not blocking, you're starting a conversation. It's easier to withdraw a change request after discussion than to retroactively raise an issue you hedged on. (See also: `notes/epistemic-humility.md` — review calibration is the code-review application of calibrated confidence.) **Review the diff, not the description** — every finding must cite a specific file:line in the actual diff. PR descriptions and auto-generated summaries can be stale or wrong. Full guidelines in `notes/code-review.md`.
+**Mean it when you review.**
+- Don't hedge with "not blocking, but should be fixed." If you'd flag it in your own code, flag it in review — don't downgrade to a nit because it's someone else's PR. Request changes and argue your case. Be willing to be wrong. A debate that reaches agreement is worth more than polite deference that lets issues slip through. Aim for a quorum on every piece of feedback — not for avoiding inconvenience to the PR author.
+- **Calibrate at 60%:** if 0% is auto-approve and 100% is auto-reject, aim for 60% — biased toward requesting changes. A 60% confidence threshold is enough to raise it — you're starting a conversation, not issuing a verdict. It's easier to withdraw a change request after discussion than to retroactively raise an issue you hedged on. (See also: `notes/epistemic-humility.md`.)
+- **Review the diff, not the description.** Every finding must cite a specific file:line in the actual diff. PR descriptions and auto-generated summaries can be stale or wrong. Full guidelines in `notes/code-review.md`.
 
 **Read `--help` before guessing.** When a CLI tool fails or you're unsure of its interface, run `<tool> --help` or `<tool> <subcommand> --help` first. Don't guess at arguments.
 
@@ -79,7 +83,7 @@ Run `den agent:list` for the current roster. Each agent has their own home repo 
 
 **Shared spaces are shared.** `notes/` is common ground — coordinate changes through chat.
 
-**Use `den` as your team channel.** Post status updates, questions, heads-ups, and coordination to the `den` chat channel throughout the day — treat it like a shared Slack. At end of day, the last agent out harvests anything worth keeping (actionable items → issues, decisions → notes, questions for Or → HUMAN.md threads, progress → your Status.md) and runs `chat clear den --yes` for a fresh start tomorrow. The channel is ephemeral by convention — anything not harvested is gone.
+**Use `den` as your team channel.** Post status updates, questions, heads-ups, and coordination to the `den` chat channel throughout the day — treat it like a shared Slack. The `fold` channel is also available for cross-team coordination with fold agents. At end of day, the last agent out harvests anything worth keeping (actionable items → issues, decisions → notes, questions for Or → HUMAN.md threads, progress → your Status.md) and runs `chat clear den --yes` for a fresh start tomorrow. The channel is ephemeral by convention — anything not harvested is gone.
 
 **Clean up before you leave.** At the end of every session, clean up your workspace:
 - **Check `git status`** on every repo you touched during the session — commit+push or stash anything outstanding
@@ -87,6 +91,7 @@ Run `den agent:list` for the current roster. Each agent has their own home repo 
 - **Push den and sync** — after pushing your den clone, run `shiv update den` so the global copy is current
 - **Update your session log** — this is already practice, but it's part of cleanup, not separate from it
 - **Tell Or** if anything is left dirty and why (e.g., waiting on review, intentionally WIP)
+- **Plan the next session** — talk through what's next with Or, not just a priority list but what you'd actually work on and in what order. The plan goes in your Status note so the next session has a running start.
 - The goal: the next session — whether it's you or your denmate — should start from a known-clean state. No detective work.
 
 **Keep it scannable.** Humans don't read walls of text. When presenting information — thread summaries, status reports, options — use short paragraphs, bullet points, and one topic at a time. If you're about to dump a multi-screen response, break it into pieces and let the human pace the conversation.
@@ -96,6 +101,8 @@ Run `den agent:list` for the current roster. Each agent has their own home repo 
 **Don't narrate HUMAN.md replies to Or.** When you write a reply on HUMAN.md, just tell Or you replied — don't repeat the content of your reply in the chat. Or can read the file.
 
 **Rewrite rambly HUMAN.md messages.** When Or (or anyone) writes a raw, stream-of-consciousness message on HUMAN.md, rewrite it into a concise, structured version using arrow notation (e.g., `**[Or → Zeke]**`). Preserve the intent and all actionable content, but tighten the prose. This is expected and appreciated — don't leave rambly messages as-is.
+
+**Know when to abort.** If you're fundamentally blocked — missing credentials, service unavailable, permissions error — fail the run with `[[ABORT]]` (output it on its own line) and a clear message explaining what's wrong. When something breaks: one retry is reasonable, then shift to problem-solving. If the broken service isn't essential, skip it and proceed. If it is essential: (1) leave a note in your zettelkasten — what broke, what you were trying to do, whether it's time-sensitive; (2) reach out through an alternative channel — email down, try chat; chat down, open a GitHub issue; (3) then exit cleanly with `[[ABORT]]`. Silent non-accomplishment is worse than a visible failure.
 
 **Ask Or when the VPN blocks you.** The Walmart network blocks many external downloads (GitHub release assets, Go modules, npm packages, etc.) with `403 MediaTypeBlocked` errors. Or's machine doesn't have this restriction. When you hit a download block, don't waste time on workarounds — just ask Or to run the install command for you.
 
@@ -168,7 +175,7 @@ Each agent has a workspace at `~/agents/<name>/` for cloning repos, running buil
 ### First-time setup
 
 ```bash
-git clone https://github.com/ricon-family/den.git ~/agents/<name>/den/
+gh repo clone ricon-family/den ~/agents/<name>/den/
 cd ~/agents/<name>/den/ && notes unlock && modules unlock && modules init && mise trust
 ```
 
