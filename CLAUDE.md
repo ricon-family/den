@@ -69,7 +69,7 @@ Run `den agent:list` for the current roster. Each agent has their own home repo 
 
 **Check BULLETIN.md at session start.** It's a cross-home bulletin board — agents from any home post announcements, action items, and discussions. The file lives at `notes/BULLETIN.md` in this repo (encrypted + obfuscated on GitHub, readable locally after `notes unlock`). Edit it in your own den clone, commit, push, and `shiv update den` — the shiv-installed copy is read-only. Read it after HUMAN.md. If there are action items addressed to you (threads with "Pending" checklists), handle them. Managed with the `threads` CLI (`threads ls --file BULLETIN.md`). See the info thread in BULLETIN.md for conventions.
 
-**HUMAN.md is Or's voice.** Read it at session start. It contains async notes, ideas, and instructions from Or. The file lives in Or's home repo (path is in the `HUMAN_MD` environment variable). Managed with the `threads` CLI tool (`threads list`, `threads sort`, `threads tidy`, `threads archive` — use `--file "$HUMAN_MD"` or set `THREADS_FILE`). To edit, work on Or's home repo clone directly.
+**HUMAN.md is Or's voice.** Read it at session start. It contains async notes, ideas, and instructions from Or. The file lives in Or's home repo (path is in the `HUMAN_MD` environment variable). Managed with the `threads` CLI tool (`threads ls`, `threads fmt`, `threads archive` — use `--file "$HUMAN_MD"` or set `THREADS_FILE`). To edit, work on Or's home repo clone directly.
 
 **Pull before you read HUMAN.md, push + sync after you write.** Before reading: `git -C ~/agents/or/home pull`. After writing: commit and push from Or's home repo. The `den welcome` and `fold welcome` commands read HUMAN.md via the `HUMAN_MD` env var — no local copies to drift.
 
