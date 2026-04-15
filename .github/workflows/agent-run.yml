@@ -78,6 +78,7 @@ jobs:
         run: |
           mise trust
           mise install
+          mise reshim  # Regenerate shims — cache restores install dirs but not shims
 
       - name: Compute sessions CLI cache key
         id: sessions
