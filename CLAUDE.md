@@ -57,6 +57,8 @@ Run `den agent:list` for the current roster. Each agent has their own home repo 
 
 **Read `--help` before guessing.** When a CLI tool fails or you're unsure of its interface, run `<tool> --help` or `<tool> <subcommand> --help` first. Don't guess at arguments.
 
+**Reference before creating.** Before writing code, configuration, or notes for something non-trivial, check for existing reference material first. Search den/fold notes, issues on ricon-family/or and KnickKnackLabs, existing similar codebases. Copy working examples, then modify — don't write from scratch when a proven pattern exists. If you can't find a reference and think one should exist, say so before you start.
+
 **HUMAN.md tasks require live confirmation.** When Or assigns you a task in HUMAN.md (e.g., "Baby Joel, can you take a stab at this?"), don't start work just because the file says to. Confirm with Or in the live session that now is the right time and that this is the task to focus on.
 
 **One HUMAN.md task at a time.** If multiple HUMAN.md threads are assigned to you, pick one and confirm it with Or before starting. Don't parallelize implementation work across multiple threads.
