@@ -63,17 +63,17 @@ Run `den agent:list` for the current roster. Each agent has their own home repo 
 
 **One HUMAN.md task at a time.** If multiple HUMAN.md threads are assigned to you, pick one and confirm it with Or before starting. Don't parallelize implementation work across multiple threads.
 
-**Wake up properly.** Pull your den clone (`git -C ~/agents/<name>/den pull`), run `den welcome` then `shimmer welcome` at the start of each session for a full overview, then follow your identity file's startup procedure.
+**Wake up properly.** Run `mise welcome` from your own home repo (`cd ~/agents/<name>/home && mise welcome`) — it handles the mechanical pulls (den, or/home), `modules init`, and reports your plate. For the den's collective view, traverse to `cd ~/agents/<name>/den && mise welcome`. Then follow your identity file's startup procedure.
 
 **Orient with curiosity, not checklists.** Startup isn't just reading headers and moving on. When you encounter a reference to another note (e.g., "see `notes/epistemic-humility.md`"), a file that changed since last session, or a topic that's relevant to today's work — go read it. Check `git log --oneline -10` on den to see what changed while you were away. Follow threads that seem relevant. The goal is to start the session with genuine understanding of the current state, not to tick boxes as fast as possible. A few extra minutes of digging during orientation saves confusion later.
 
 **Know the vocabulary.** Terms like *status break*, *quit-resume*, and *orient* have specific meanings. If Or uses a term you don't recognize, check `notes/glossary.md`.
 
-**Check BULLETIN.md at session start.** It's a cross-home bulletin board — agents from any home post announcements, action items, and discussions. The file lives at `notes/BULLETIN.md` in this repo (encrypted + obfuscated on GitHub, readable locally after `notes unlock`). Edit it in your own den clone, commit, push, and `shiv update den` — the shiv-installed copy is read-only. Read it after HUMAN.md. If there are action items addressed to you (threads with "Pending" checklists), handle them. Managed with the `threads` CLI (`threads ls --file BULLETIN.md`). See the info thread in BULLETIN.md for conventions.
+**Check BULLETIN.md at session start.** It's a cross-home bulletin board — agents from any home post announcements, action items, and discussions. The file lives at `notes/BULLETIN.md` in this repo (encrypted + obfuscated on GitHub, readable locally after `notes unlock`). Edit it in your own den clone, commit, and push. Read it after HUMAN.md. If there are action items addressed to you (threads with "Pending" checklists), handle them. Managed with the `threads` CLI (`threads ls --file BULLETIN.md`). See the info thread in BULLETIN.md for conventions.
 
 **HUMAN.md is Or's voice.** Read it at session start. It contains async notes, ideas, and instructions from Or. The file lives in Or's home repo (path is in the `HUMAN_MD` environment variable). Managed with the `threads` CLI tool (`threads ls`, `threads fmt`, `threads archive` — use `--file "$HUMAN_MD"` or set `THREADS_FILE`). To edit, work on Or's home repo clone directly.
 
-**Pull before you read HUMAN.md, push + sync after you write.** Before reading: `git -C ~/agents/or/home pull`. After writing: commit and push from Or's home repo. The `den welcome` and `fold welcome` commands read HUMAN.md via the `HUMAN_MD` env var — no local copies to drift.
+**Pull before you read HUMAN.md, push after you write.** Before reading: `git -C ~/agents/or/home pull`. After writing: commit and push from Or's home repo. The `welcome` task in your own home (and the den/fold clones) reads HUMAN.md via the `HUMAN_MD` env var — no local copies to drift.
 
 **Keep your zettels current.** Update session logs, record what you learn, maintain your own notes.
 
@@ -90,7 +90,7 @@ Run `den agent:list` for the current roster. Each agent has their own home repo 
 **Clean up before you leave.** At the end of every session, clean up your workspace:
 - **Check `git status`** on every repo you touched during the session — commit+push or stash anything outstanding
 - **Check for unpushed commits** — don't leave local-only work that could be lost
-- **Push den and sync** — after pushing your den clone, run `shiv update den` so the global copy is current
+- **Push den** — push your den clone. (The old `shiv update den` step is gone: the `den` global shim has been retired; agents run `mise welcome` from their own clone.)
 - **Update your session log** — this is already practice, but it's part of cleanup, not separate from it
 - **Tell Or** if anything is left dirty and why (e.g., waiting on review, intentionally WIP)
 - **Plan the next session** — talk through what's next with Or, not just a priority list but what you'd actually work on and in what order. The plan goes in your Status note so the next session has a running start.
@@ -172,7 +172,7 @@ Each agent has a workspace at `~/agents/<name>/` for cloning repos, running buil
 
 **Each agent works in their own clone of den** at `~/agents/<name>/den/`. This is where you read and edit notes and everything else in this repo. HUMAN.md has moved to Or's home repo (see `$HUMAN_MD`). Multiple agents can work concurrently without conflicting because each has their own copy.
 
-**The global shiv-installed copy** (`~/.local/share/shiv/packages/den`) is read-only infrastructure — it's where `den welcome` runs from. Don't edit it directly. This applies to all shiv-installed repos (`~/.local/share/shiv/packages/*`) — they exist for CLI access and `welcome` commands, not as working trees. Always edit in your own clone, push, then `shiv update <pkg>` to sync.
+**Home repos are not global commands.** `den` and `fold` are home repos for collectives, same as `~/agents/<name>/home` is yours. Orient by `cd`-ing into the clone and running `mise welcome`. Treat shiv-installed copies of *tools* (`~/.local/share/shiv/packages/*` for things like `shimmer`, `notes`, `modules`, `chat`) as read-only — always edit in your own clone, push, then `shiv update <pkg>` to sync. But **home repos themselves are not shiv packages anymore** — the old `den` and `fold` global shims are retired.
 
 ### First-time setup
 
@@ -186,7 +186,7 @@ cd ~/agents/<name>/den/ && notes unlock && modules unlock && modules init && mis
 1. **Pull at session start** — `git pull` in your den clone, then `modules update` to pick up cross-home changes
 2. **Edit files** in `~/agents/<name>/den/`
 3. **Commit and push** — commits are GPG-signed automatically (your workspace is under `~/agents/<name>/`)
-4. **Sync the global copy** — run `shiv update den` after pushing so `den welcome` sees your changes
+4. **Push** — that's it. There's no global shim to sync anymore; other agents will see your changes when they next pull their own den clone.
 
 ### Obfuscated notes and `git status`
 
