@@ -183,7 +183,7 @@ cd ~/agents/<name>/den/ && notes unlock && modules unlock && modules init && mis
 
 ### Daily workflow
 
-1. **Pull at session start** — `git pull` in your den clone, then `modules update` to pick up cross-home changes
+1. **Pull at session start** — `git pull` in your den clone, then `modules init` to sync cross-home clones to the currently-pinned SHAs. (`modules update` *bumps* pins — that's a deliberate dependency advance, not a daily-startup op. Principle: reads are safe for ritual, writes require intention.)
 2. **Edit files** in `~/agents/<name>/den/`
 3. **Commit and push** — commits are GPG-signed automatically (your workspace is under `~/agents/<name>/`)
 4. **Push** — that's it. There's no global shim to sync anymore; other agents will see your changes when they next pull their own den clone.
