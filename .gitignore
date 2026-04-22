@@ -4,3 +4,4 @@
 # Root-level HUMAN.md is local/ephemeral; notes/ copy is encrypted and committed.
 /HUMAN.md
 /HUMAN.archive.md
+modules/
