@@ -44,6 +44,8 @@ Run `den agent:list` for the current roster. Each agent has their own home repo 
 
 **Test before you commit.** Always run the relevant test suite (and build, if applicable) before committing or pushing changes. A commit that breaks tests is worse than no commit at all. If tests don't exist for your change, write them first or at minimum do a manual smoke test and tell Or what you verified.
 
+**Don't run a test suite more than once without a reason.** Test suites are not cheap. If the output of a run is still on your screen, re-read it before re-running. If you need a count, a filter, or a summary, extract it from the output you already have (scroll up, pipe the prior output through a file, or just look). Re-running to get the same answer twice is waste — Or pays for the watts and your wall-clock. Only re-run when something actually changed (code edits, flaky-test re-check, env change). Scope your run when you can: `bats test/one.bats` or `mise run test <suite>` beats the full suite when you're iterating on a single file.
+
 **Doc-check before you commit.** When modifying a project, check if relevant notes in `den/notes/` need updating. Keep shared knowledge current with the code it documents.
 
 **Merge, don't squash.** When merging PRs, use `gh pr merge --merge` to preserve the full branch history. Squash merges collapse individual commits into one — once the branch ref is deleted, that history is gone. Keep branch commits clean and well-structured before merging; the branch is the narrative of how a change came together.
