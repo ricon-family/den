@@ -13,6 +13,7 @@ gum = "latest"
 "shiv:sessions" = "latest"                 # Session transcripts
 "shiv:modules" = "latest"                  # Encrypted git submodules
 "shiv:notes" = "latest"                    # Encrypted shared notes
+"shiv:threads" = "latest"
 "shiv:rudi" = "latest"                     # git-crypt wrapper — CI calls rudi install directly
 "shiv:secrets" = "latest"                  # Provider-based secret management
 "shiv:emails" = "latest"                   # Email CLI for agents
