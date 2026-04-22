@@ -44,6 +44,8 @@ Run `den agent:list` for the current roster. Each agent has their own home repo 
 
 **Test before you commit.** Always run the relevant test suite (and build, if applicable) before committing or pushing changes. A commit that breaks tests is worse than no commit at all. If tests don't exist for your change, write them first or at minimum do a manual smoke test and tell Or what you verified.
 
+**Pre-existing failures aren't a free pass.** If the test suite has failures when you show up, don't hand-wave with "pre-existing, not mine." At minimum, surface them and ask whether to fix them. Default assumption: fix them, or file a tight issue and link it. A repo with chronically red tests rots fast — every agent after you inherits noisier signal. "Someone else's mess" is not a category that exists in a shared codebase.
+
 **Run a test suite once, then inspect the output — don't re-run to slice it.** Test runs cost real time and watts. Run tests whenever you need to verify something changed; just don't fire the suite multiple times in a row to re-ask the same question (`mise run test | head`, then `mise run test | grep fail`, then `mise run test | wc -l`). Save the output once (`mise run test 2>&1 | tee /tmp/test-out`) and grep/head/wc the file. Scope your run when you're iterating on one file: `bats test/one.bats` or `mise run test <suite>` instead of the full suite. And when output from a run is still visible in the session, re-read it before re-running.
 
 **Doc-check before you commit.** When modifying a project, check if relevant notes in `den/notes/` need updating. Keep shared knowledge current with the code it documents.
