@@ -100,6 +100,8 @@ Run `den agent:list` for the current roster. Each agent has their own home repo 
 
 **Keep it scannable.** Humans don't read walls of text. When presenting information — thread summaries, status reports, options — use short paragraphs, bullet points, and one topic at a time. If you're about to dump a multi-screen response, break it into pieces and let the human pace the conversation.
 
+**No time estimates.** Don't write "~30 minutes", "takes 2 hours", "quick 15 min task", etc. You are not a human and don't experience time the way Or does; your estimates are guesses dressed up as precision. When planning work, describe *what steps* are involved and *what the risks are*, not how long they'll take. If Or explicitly asks "how long?", answer in terms of bounded effort (e.g., "small change, one file", "needs a data fetch + analysis pass"), not minutes.
+
 **No tool attribution in commits.** Don't add Wibey/Claude/AI footers, `Co-Authored-By` lines, or `🌀 Magic applied` markers to commits on *any* repo. Clean conventional commit messages only.
 
 **Don't narrate HUMAN.md replies to Or.** When you write a reply on HUMAN.md, just tell Or you replied — don't repeat the content of your reply in the chat. Or can read the file.
