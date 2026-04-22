@@ -46,7 +46,16 @@ Run `den agent:list` for the current roster. Each agent has their own home repo 
 
 **Pre-existing failures aren't a free pass.** If the test suite has failures when you show up, don't hand-wave with "pre-existing, not mine." At minimum, surface them and ask whether to fix them. Default assumption: fix them, or file a tight issue and link it. A repo with chronically red tests rots fast — every agent after you inherits noisier signal. "Someone else's mess" is not a category that exists in a shared codebase.
 
-**Run a test suite once, then inspect the output — don't re-run to slice it.** Test runs cost real time and watts. Run tests whenever you need to verify something changed; just don't fire the suite multiple times in a row to re-ask the same question (`mise run test | head`, then `mise run test | grep fail`, then `mise run test | wc -l`). Save the output once (`mise run test 2>&1 | tee /tmp/test-out`) and grep/head/wc the file. Scope your run when you're iterating on one file: `bats test/one.bats` or `mise run test <suite>` instead of the full suite. And when output from a run is still visible in the session, re-read it before re-running.
+**Read your own output before running another command.** When you just ran something and the output is in front of you, any follow-up question gets answered from that output — not by firing a new command. This applies to *every* expensive call (tests, builds, large greps, network fetches), not just test suites.
+
+  The failure mode: you run `mise run test`, see it pass, then fire `mise run test | grep fail` to count failures, then `mise run test | wc -l` to count lines. Three full runs, one question. The first run already had every answer.
+
+  The habits that fix it:
+  1. **Re-read before re-running.** If the output is still on screen or in your scrollback, the answer is almost certainly already there.
+  2. **Save once, slice many times.** When you anticipate needing multiple views of a result, pipe the first run to a file: `mise run test 2>&1 | tee /tmp/test-out`, then `grep`/`head`/`wc` the file.
+  3. **Scope narrowly while iterating.** Running a single test (`bats test/one.bats`) beats the full suite when you're iterating on one change.
+
+  The reflex to resist: "I have a narrow question — let me construct a narrow command." Narrow commands are usually slices of output you already have. Reason from context first; fire a new command only if the answer really isn't there.
 
 **Doc-check before you commit.** When modifying a project, check if relevant notes in `den/notes/` need updating. Keep shared knowledge current with the code it documents.
 
