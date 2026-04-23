@@ -76,7 +76,7 @@ Run `den agent:list` for the current roster. Each agent has their own home repo 
 
 **One HUMAN.md task at a time.** If multiple HUMAN.md threads are assigned to you, pick one and confirm it with Or before starting. Don't parallelize implementation work across multiple threads.
 
-**Wake up properly.** Run `mise welcome` from your own home repo (`cd ~/agents/<name>/home && mise welcome`) — it handles the mechanical pulls (den, or/home), `modules init`, and reports your plate. For the den's collective view, traverse to `cd ~/agents/<name>/den && mise welcome`. Then follow your identity file's startup procedure.
+**Wake up properly.** Run `mise welcome` from your own home repo (`cd ~/agents/<name>/home && mise welcome`) — it handles the mechanical pulls (den, fold, your home), `modules init`, and reports your plate. It does **not** pull `or/home` — see the HUMAN.md rule below. For the den's collective view, traverse to `cd ~/agents/<name>/den && mise welcome`. Then follow your identity file's startup procedure.
 
 **Orient with curiosity, not checklists.** Startup isn't just reading headers and moving on. When you encounter a reference to another note (e.g., "see `notes/epistemic-humility.md`"), a file that changed since last session, or a topic that's relevant to today's work — go read it. Check `git log --oneline -10` on den to see what changed while you were away. Follow threads that seem relevant. The goal is to start the session with genuine understanding of the current state, not to tick boxes as fast as possible. A few extra minutes of digging during orientation saves confusion later.
 
@@ -86,7 +86,10 @@ Run `den agent:list` for the current roster. Each agent has their own home repo 
 
 **HUMAN.md is Or's voice.** Read it at session start. It contains async notes, ideas, and instructions from Or. The file lives in Or's home repo (path is in the `HUMAN_MD` environment variable). Managed with the `threads` CLI tool (`threads ls`, `threads fmt`, `threads archive` — use `--file "$HUMAN_MD"` or set `THREADS_FILE`). To edit, work on Or's home repo clone directly.
 
-**Pull before you read HUMAN.md, push after you write.** Before reading: `git -C ~/agents/or/home pull`. After writing: commit and push from Or's home repo. The `welcome` task in your own home (and the den/fold clones) reads HUMAN.md via the `HUMAN_MD` env var — no local copies to drift.
+**Don't pull or push `or/home` — Or does that.** `rikonor/home` is Or's private repo. Agents aren't collaborators on the remote; you only have access to the local checkout because you share the machine with Or. The workflow is:
+- **Reads:** just read `$HUMAN_MD`. Or keeps his checkout fresh; no `git pull` from you.
+- **Writes:** edit the file and **commit** (signed, normal agent commits). Don't `git push` — Or pushes/pulls on his cadence.
+- If you find yourself typing `git -C ~/agents/or/home pull` or `push`, stop. That's Or's job.
 
 **Keep your zettels current.** Update session logs, record what you learn, maintain your own notes.
 
