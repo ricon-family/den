@@ -1,0 +1,191 @@
+name: claude-probe
+
+# Scratch workflow — probe claude-code JSONL tolerance for sessions#50 step 4.
+#
+# Question: does claude-code tolerate unknown-type entries appended to its
+# session JSONL, the same way pi does? If yes, we reuse pi's wake-injection
+# model. If no, we need an escape hatch.
+#
+# Delete this workflow after the probe answers the question. Tracked in the
+# sessions repo context, not here.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Set up mise
+        uses: jdx/mise-action@v3
+        with:
+          install: false  # We'll install scoped per-probe, not repo-wide.
+
+      - name: Prepare probe dir
+        run: |
+          mkdir -p /tmp/probe/work /tmp/probe-artifacts
+          cat > /tmp/probe/mise.toml <<'EOF'
+          [tools]
+          claude-code = "latest"
+          EOF
+          cd /tmp/probe
+          mise trust
+          mise install
+          mise exec -- claude --version
+
+      - name: Probe — initial session
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        working-directory: /tmp/probe/work
+        run: |
+          set -euo pipefail
+
+          echo "=== cwd: $(pwd)"
+          encoded_cwd=$(pwd | sed 's|/|-|g')
+          encoded_cwd="-${encoded_cwd#-}"
+          echo "=== encoded_cwd: $encoded_cwd"
+
+          # First turn — create a session with one exchange.
+          echo "=== claude -p 'hello' (first turn)"
+          mise exec -C /tmp/probe -- claude -p "Say 'hi' in one word." \
+            > /tmp/probe-artifacts/01-first-turn.stdout \
+            2> /tmp/probe-artifacts/01-first-turn.stderr || {
+              echo "first turn exited non-zero: $?"
+              cat /tmp/probe-artifacts/01-first-turn.stderr
+            }
+
+          echo "=== project dir contents"
+          proj_dir="$HOME/.claude/projects/$encoded_cwd"
+          ls -la "$proj_dir" || { echo "no project dir — aborting"; exit 1; }
+
+          # Find the freshest jsonl.
+          jsonl=$(ls -t "$proj_dir"/*.jsonl | head -1)
+          uuid=$(basename "$jsonl" .jsonl)
+          echo "=== session uuid: $uuid"
+          echo "$uuid" > /tmp/probe-artifacts/session-uuid.txt
+          cp "$jsonl" /tmp/probe-artifacts/01-initial.jsonl
+
+      - name: Probe — inject synthetic wake entry
+        working-directory: /tmp/probe/work
+        run: |
+          set -euo pipefail
+          encoded_cwd=$(pwd | sed 's|/|-|g')
+          encoded_cwd="-${encoded_cwd#-}"
+          proj_dir="$HOME/.claude/projects/$encoded_cwd"
+          uuid=$(cat /tmp/probe-artifacts/session-uuid.txt)
+          jsonl="$proj_dir/$uuid.jsonl"
+
+          # Find last entry's uuid to use as parentUuid for our wake entry.
+          last_uuid=$(tail -1 "$jsonl" | jq -r '.uuid // empty')
+          echo "=== last real entry uuid: $last_uuid"
+
+          # Our wake entry schema — matches dispatch.sh wake_entry shape,
+          # plus claude-code structural fields (sessionId, parentUuid,
+          # timestamp) so the file looks coherent to whoever reads it.
+          wake_uuid=$(uuidgen | tr 'A-Z' 'a-z')
+          now=$(date -u +%Y-%m-%dT%H:%M:%S.000Z)
+          jq -nc \
+            --arg id "$wake_uuid" \
+            --arg parent "$last_uuid" \
+            --arg sid "$uuid" \
+            --arg ts "$now" \
+            '{
+              type: "wake",
+              uuid: $id,
+              parentUuid: $parent,
+              sessionId: $sid,
+              timestamp: $ts,
+              shell: "probe",
+              agent: "ikma",
+              harness: "claude",
+              headless: true,
+              meta: {reason: "probe-1"}
+            }' >> "$jsonl"
+
+          cp "$jsonl" /tmp/probe-artifacts/02-after-inject.jsonl
+          echo "=== tail of injected file"
+          tail -3 "$jsonl"
+
+      - name: Probe — resume session
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        working-directory: /tmp/probe/work
+        run: |
+          set -euo pipefail
+          uuid=$(cat /tmp/probe-artifacts/session-uuid.txt)
+          encoded_cwd=$(pwd | sed 's|/|-|g')
+          encoded_cwd="-${encoded_cwd#-}"
+          proj_dir="$HOME/.claude/projects/$encoded_cwd"
+          jsonl="$proj_dir/$uuid.jsonl"
+
+          echo "=== claude --resume $uuid -p 'second turn'"
+          set +e
+          mise exec -C /tmp/probe -- claude --resume "$uuid" -p "Reply 'ack' in one word." \
+            > /tmp/probe-artifacts/03-resume.stdout \
+            2> /tmp/probe-artifacts/03-resume.stderr
+          resume_exit=$?
+          set -e
+          echo "=== resume exit: $resume_exit"
+          echo "$resume_exit" > /tmp/probe-artifacts/03-resume.exit
+
+          echo "=== stderr from resume ==="
+          cat /tmp/probe-artifacts/03-resume.stderr || true
+
+          cp "$jsonl" /tmp/probe-artifacts/03-after-resume.jsonl
+
+      - name: Probe — report
+        run: |
+          set -euo pipefail
+          cd /tmp/probe-artifacts
+
+          echo "=== FILE LIST"
+          ls -la
+
+          echo
+          echo "=== DIFF: 01-initial -> 02-after-inject"
+          diff 01-initial.jsonl 02-after-inject.jsonl || true
+
+          echo
+          echo "=== DIFF: 02-after-inject -> 03-after-resume"
+          diff 02-after-inject.jsonl 03-after-resume.jsonl || true
+
+          echo
+          echo "=== WAKE ENTRY SURVIVED? (grep type=wake in final file)"
+          grep -c '"type":"wake"' 03-after-resume.jsonl || echo "NOT FOUND"
+
+          echo
+          echo "=== RESUME EXIT CODE"
+          cat 03-resume.exit
+
+          echo
+          echo "=== POST-RESUME ENTRIES (those added after our wake injection)"
+          # Count entries in each stage
+          echo "01-initial lines: $(wc -l < 01-initial.jsonl)"
+          echo "02-after-inject lines: $(wc -l < 02-after-inject.jsonl)"
+          echo "03-after-resume lines: $(wc -l < 03-after-resume.jsonl)"
+
+          echo
+          echo "=== FIRST POST-INJECTION ENTRY PARENT CHAIN"
+          # Line 02 has N lines; line 03 has >=N. Inspect parentUuid of line N+1 in 03.
+          n02=$(wc -l < 02-after-inject.jsonl)
+          sed -n "$((n02+1))p" 03-after-resume.jsonl | jq '{uuid, parentUuid, type}' || echo "no entry after our wake"
+
+          echo
+          echo "=== WAKE ENTRY UUID vs FIRST POST-RESUME parentUuid"
+          our_wake_uuid=$(tail -1 02-after-inject.jsonl | jq -r '.uuid')
+          first_post_parent=$(sed -n "$((n02+1))p" 03-after-resume.jsonl | jq -r '.parentUuid // "none"')
+          echo "our wake uuid:        $our_wake_uuid"
+          echo "first post parentUuid: $first_post_parent"
+          if [ "$our_wake_uuid" = "$first_post_parent" ]; then
+            echo "VERDICT: chain threaded THROUGH our wake entry (claude accepted it)"
+          else
+            echo "VERDICT: chain SKIPPED our wake entry (claude ignored it)"
+          fi
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: claude-probe
+          path: /tmp/probe-artifacts/
