@@ -197,8 +197,16 @@ Each agent has a workspace at `~/agents/<name>/` for cloning repos, running buil
 
 ```bash
 gh repo clone ricon-family/den ~/agents/<name>/den/
-cd ~/agents/<name>/den/ && notes unlock && modules unlock && modules init && mise trust
+cd ~/agents/<name>/den/
+notes unlock
+notes install-hooks
+modules unlock
+modules install-hooks
+modules init
+mise trust
 ```
+
+`notes unlock` makes files readable; `notes install-hooks` makes commits safe. Don't skip hook installation in a fresh clone.
 
 ### Daily workflow
 
@@ -218,6 +226,7 @@ Note filenames are obfuscated on GitHub (e.g., `secret.md` → `a1b2c3d4`). Loca
 - `git commit` — pre-commit hook obfuscates, post-commit hook deobfuscates
 - `git pull` works — post-merge hook deobfuscates after pull
 - Don't run `git add -A` or `git add notes/` — use `notes stage` instead
+- If a commit mentions readable `notes/*.md` files, or `notes changes` is still dirty immediately after commit, stop before pushing: `git reset --mixed HEAD~1`, run `notes install-hooks`, then stage and commit again.
 
 ## Dashboard
 
