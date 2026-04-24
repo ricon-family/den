@@ -130,33 +130,34 @@ Run `den agent:list` for the current roster. Each agent has their own home repo 
 
 ## Shared Knowledge
 
-**Read `notes/README.md` at session start.** It's the index to shared documentation on projects, CI tooling, infrastructure, and conventions. If you're about to use a tool or work on a project, check the index first — there's probably a doc for it.
+**Read `notes/index.md` at session start.** It's the index to shared documentation on projects, CI tooling, infrastructure, and conventions. If you're about to use a tool or work on a project, check the index first — there's probably a doc for it.
 
 ## Creating New Codebases
 
-Before starting a new KnickKnackLabs tool, read **fold's `notes/creating-a-codebase.md`** — it's the single entry point for everything you need: mise conventions, BATS testing patterns, bash compatibility, README writing, releasing, and more. Access it via den's fold submodule (run `modules init` first if `submodules/` is empty).
+Before starting a new KnickKnackLabs tool, read **fold's `notes/creating-a-codebase.md`** — it's the single entry point for everything you need: mise conventions, BATS testing patterns, bash compatibility, README writing, releasing, and more. Access it via den's fold module (run `modules unlock && modules init` first if `modules/fold/` is missing).
 
 ## Structure
 
 ```
 den/
 ├── notes/                  # Shared knowledge, identity files (encrypted)
-├── submodules/             # Cross-home references (encrypted manifest)
+├── .modules/               # Encrypted cross-home module manifest + config
+├── modules/                # Gitignored cross-home clones populated by `modules init`
 ├── CLAUDE.md               # This file — auto-loaded at session start
 └── mise.toml               # Shared tooling config
 ```
 
 ## Cross-Home Access
 
-Den and fold reference each other as encrypted submodules. After unlocking, run `modules init` to populate them:
+Den and fold reference each other via encrypted module manifests. After unlocking, run `modules init` to populate local clones:
 
 ```bash
-notes unlock      # decrypts notes
-modules unlock    # decrypts the submodules manifest
-modules init      # clones cross-home repos into submodules/
+notes unlock      # decrypt/deobfuscate notes in this repo
+modules unlock    # decrypts .modules/manifest
+modules init      # clones pinned cross-home repos into modules/<name>/
 ```
 
-This gives you read access to fold's notes (and fold agents get access to den's). See `notes/cross-repo-modules-integration.md` for details on updating pins and how encryption works.
+This gives you read access to fold's notes (and fold agents get access to den's). See `notes/cross-repo-modules.md` for details on updating pins and how encryption works.
 
 ## Architecture: Den vs Private Zettelkasten
 
