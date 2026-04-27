@@ -18,12 +18,14 @@ on:
         required: true
         type: string
       model:
-        description: 'Claude model to use (optional, defaults to opus)'
+        description: 'Model to use (optional)'
         required: false
         type: string
     secrets:
       ANTHROPIC_API_KEY:
-        required: true
+        required: false
+      PI_AUTH_JSON:
+        required: false
       AGENT_GITHUB_PAT:
         required: true
       AGENT_GPG_PRIVATE_KEY:
@@ -100,7 +102,7 @@ jobs:
         run: sessions cli:build
 
       - name: Install pi
-        run: mise use -g github:badlogic/pi-mono@0.64.0
+        run: mise use -g pi@0.70.5
 
       - name: Setup secrets for env provider
         env:
@@ -145,6 +147,8 @@ jobs:
         run: shimmer gpg:setup ${{ inputs.agent }}
 
       - name: Setup email
+        env:
+          EMAIL_PASSWORD: ${{ secrets.AGENT_EMAIL_PASSWORD }}
         run: emails setup ${{ inputs.agent }}
 
       - name: Setup Matrix
@@ -160,18 +164,24 @@ jobs:
             echo "B2 credentials not configured, skipping blob storage setup"
           fi
 
-      - name: Clone zettelkasten
+      - name: Clone home repo
         run: |
-          ZETTEL_DIR="$HOME/agents/${{ inputs.agent }}/zettelkasten"
-          ZETTEL_REPO="${{ inputs.agent }}-ricon/zettelkasten"
+          HOME_DIR="$HOME/agents/${{ inputs.agent }}/home"
+          HOME_REPO="${{ inputs.agent }}-ricon/home"
+          LEGACY_REPO="${{ inputs.agent }}-ricon/zettelkasten"
 
-          if gh repo view "$ZETTEL_REPO" --json name > /dev/null 2>&1; then
-            echo "Cloning zettelkasten from $ZETTEL_REPO..."
-            git clone "https://x-access-token:${GH_TOKEN}@github.com/${ZETTEL_REPO}.git" "$ZETTEL_DIR"
-            echo "Zettelkasten available at $ZETTEL_DIR"
+          if gh repo view "$HOME_REPO" --json name > /dev/null 2>&1; then
+            REPO="$HOME_REPO"
+          elif gh repo view "$LEGACY_REPO" --json name > /dev/null 2>&1; then
+            REPO="$LEGACY_REPO"
           else
-            echo "No zettelkasten found for ${{ inputs.agent }}, skipping"
+            echo "No home repo found for ${{ inputs.agent }}, skipping"
+            exit 0
           fi
+
+          echo "Cloning home repo from $REPO..."
+          git clone "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git" "$HOME_DIR"
+          echo "Home repo available at $HOME_DIR"
 
       - name: Unlock encrypted notes
         run: |
@@ -180,9 +190,27 @@ jobs:
             notes unlock || echo "Warning: notes unlock failed — encrypted files may not be readable"
           fi
 
+      - name: Setup pi auth
+        env:
+          PI_AUTH_JSON: ${{ secrets.PI_AUTH_JSON }}
+        run: |
+          if [ -z "${PI_AUTH_JSON:-}" ]; then
+            echo "PI_AUTH_JSON not configured; pi will use provider env vars or existing auth."
+            exit 0
+          fi
+
+          # First-pass CI restoration: write auth.json for this run only.
+          # This intentionally does not sync refreshed OAuth tokens back to
+          # GitHub secrets yet; token freshness/concurrency is follow-up work.
+          PI_AGENT_DIR="$RUNNER_TEMP/pi-agent"
+          mkdir -p "$PI_AGENT_DIR"
+          chmod 700 "$PI_AGENT_DIR"
+          printf '%s' "$PI_AUTH_JSON" > "$PI_AGENT_DIR/auth.json"
+          chmod 600 "$PI_AGENT_DIR/auth.json"
+          echo "PI_CODING_AGENT_DIR=$PI_AGENT_DIR" >> "$GITHUB_ENV"
+
       - name: Run agent
         env:
-          AGENT_HOME: $HOME/${{ github.event.repository.name }}
           AGENT: ${{ inputs.agent }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           BROWSER_GITHUB_COM_PASSWORD: ${{ secrets.AGENT_GITHUB_PASSWORD }}
@@ -193,6 +221,9 @@ jobs:
           RUN_TIMEOUT: 900
         run: |
           echo "### AGENT SESSION START ###"
+
+          cd "$HOME/$REPO_NAME"
+          export CALLER_PWD="$HOME/$REPO_NAME"
 
           # shimmer as sets identity env vars (AGENT_IDENTITY, GIT_AUTHOR_*, GH_TOKEN, etc.)
           # shimmer agent --headless delegates to sessions run for execution
