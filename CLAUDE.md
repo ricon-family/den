@@ -130,7 +130,7 @@ Run `den agent:list` for the current roster. Each agent has their own home repo 
 
 ## Shared Knowledge
 
-**Read `notes/index.md` at session start.** It's the index to shared documentation on projects, CI tooling, infrastructure, and conventions. If you're about to use a tool or work on a project, check the index first — there's probably a doc for it.
+**Browse `notes/` directly when you need shared documentation.** No auto-generated index — `ls notes/` and `rg <topic> notes/` are the right tools. The `notes` CLI's `index` subcommand exists but we don't use the output.
 
 ## Creating New Codebases
 
