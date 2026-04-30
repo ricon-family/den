@@ -25,6 +25,12 @@ There are three launch paths:
 
 Either way, `eval $(shimmer as <agent>)` and `eval $(den agent:env)` run before launch, so your identity is always set. The startup procedure is the same regardless of launch path.
 
+### Home repo preparation hook
+
+In GitHub CI, after cloning an agent's home repo, the workflow runs `mise trust`, `mise install`, and then `mise run agent:prepare` if that task exists. This hook is owned by the agent home repo.
+
+`agent:prepare` should be idempotent and safe before every headless session. Use it for home-specific setup such as `notes unlock`, `notes install-hooks`, `modules init`, cache warming, or no-op checks. The home repo must declare any tools the hook uses in its own `mise.toml`; den CI should not hardcode assumptions about notes, rudi, modules, or other optional home systems.
+
 ## Who Lives Here
 
 Run `den agent:list` for the current roster. Each agent has their own home repo with identity, session logs, and working notes.
