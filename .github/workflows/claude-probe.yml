@@ -18,7 +18,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Set up mise
-        uses: jdx/mise-action@v3
+        uses: jdx/mise-action@v4
         with:
           install: false  # We'll install scoped per-probe, not repo-wide.
 
@@ -60,7 +60,9 @@ jobs:
           ls -la "$proj_dir" || { echo "no project dir — aborting"; exit 1; }
 
           # Find the freshest jsonl.
-          jsonl=$(ls -t "$proj_dir"/*.jsonl | head -1)
+          jsonl=$(find "$proj_dir" -maxdepth 1 -type f -name '*.jsonl' -printf '%T@ %p\n' \
+            | sort -nr \
+            | awk 'NR == 1 { sub(/^[^ ]+ /, ""); print }')
           uuid=$(basename "$jsonl" .jsonl)
           echo "=== session uuid: $uuid"
           echo "$uuid" > /tmp/probe-artifacts/session-uuid.txt
@@ -83,7 +85,7 @@ jobs:
           # Our wake entry schema — matches dispatch.sh wake_entry shape,
           # plus claude-code structural fields (sessionId, parentUuid,
           # timestamp) so the file looks coherent to whoever reads it.
-          wake_uuid=$(uuidgen | tr 'A-Z' 'a-z')
+          wake_uuid=$(uuidgen | tr '[:upper:]' '[:lower:]')
           now=$(date -u +%Y-%m-%dT%H:%M:%S.000Z)
           jq -nc \
             --arg id "$wake_uuid" \

@@ -9,8 +9,8 @@ shiv = "https://github.com/KnickKnackLabs/vfox-shiv"
 [tools]
 usage = "latest"
 gum = "latest"
-"shiv:shimmer" = "latest"                 # Agent orchestration + identity
-"shiv:sessions" = "latest"                 # Session transcripts
+"shiv:shimmer" = "0.1.3"                 # Agent orchestration + identity
+"shiv:sessions" = "0.4.1"                 # Session transcripts
 "shiv:modules" = "latest"                  # Encrypted git submodules
 "shiv:notes" = "latest"                    # Encrypted shared notes
 "shiv:threads" = "latest"
