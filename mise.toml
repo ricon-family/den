@@ -20,14 +20,6 @@ gum = "latest"
 "shiv:codebase" = "latest"                 # Codebase linting + migrations
 "shiv:farts" = "latest"                    # Frontmatter queries for agent:list
 
-# git-crypt has no macOS ARM prebuilt binary — install via: rudi install
-
-# Home — shared agent infrastructure
-#
-# Each agent has tasks in agents/<name>/.mise/tasks/
-# Shared tasks go in .mise/tasks/
-# Run `mise tasks` to see available tasks
-
 [_.codebase]
 lint = ["mise-settings", "gum-table"]
 
