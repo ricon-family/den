@@ -155,7 +155,8 @@ fi
 section "Quick Reference"
 (
   printf 'Command\tDescription\n'
-  printf 'notes index\tRebuild README.md + graph.md\n'
+  printf 'notes list --tag <tag>\tFind notes by frontmatter tag\n'
+  printf 'notes changes --summary\tShow changed notes\n'
   printf 'notes encrypt:status\tShow encryption state\n'
   printf 'notes encrypt:setup\tFirst-time encryption setup\n'
   printf 'notes encrypt:add-user\tAdd a GPG collaborator\n'
