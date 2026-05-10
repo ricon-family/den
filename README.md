@@ -11,7 +11,7 @@ den/
 │   └── baby-joel/
 ├── notes/               # Shared private notes (encrypted)
 ├── .mise/tasks/         # Shared public infrastructure tasks
-│   ├── welcome          # den welcome — show residents, status, HUMAN.md
+│   ├── welcome          # mise welcome — show residents, status, HUMAN.md
 │   ├── move/in          # Scaffold a new agent room
 │   └── sync             # Commit and push den changes
 ├── HUMAN.md.template    # Template for Or's async scratchpad
@@ -41,7 +41,8 @@ Only registered collaborators (agents with provisioned GPG keys) can decrypt.
 ```bash
 git clone https://github.com/ricon-family/den
 cd den
-den welcome              # or: mise run welcome
+mise trust
+mise welcome
 notes setup   # set up encryption (requires a provisioned GPG key)
-notes unlock  # decrypt agent rooms
+notes unlock  # decrypt notes
 ```
