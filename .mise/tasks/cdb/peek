@@ -1,0 +1,164 @@
+#!/usr/bin/env -S uv run --script
+#MISE description="Inspect entries in a CDB file (specific key, or by size quantile)"
+#USAGE arg "<file>" help="Path to a CDB file"
+#USAGE arg "[key]" help="Specific key to dump (raw bytes). If omitted, samples entries by size."
+#USAGE flag "--at <quantile>" help="When no key is given, pick the entry at this quantile (min, p25, p50, p95, p99, max). Default: shows all of those."
+#USAGE flag "--bytes <n>" help="Preview cap in bytes (default: 240). Use --raw to show full value."
+#USAGE flag "--raw" help="Show full value (overrides --bytes)"
+#USAGE flag "--json" help="Output structured JSON instead of human-readable preview"
+# /// script
+# requires-python = ">=3.10"
+# dependencies = ["pure-cdb>=4.0"]
+# ///
+
+"""Inspect entries in a constant database (cdb) file.
+
+Two modes:
+  - With <key>: dump that key's value (use --bytes/--raw to control preview)
+  - Without <key>: sample entries by size quantile (--at) or show all
+    of min/p25/p50/p95/p99/max
+"""
+
+import json
+import os
+import sys
+from pathlib import Path
+
+import cdblib  # type: ignore[import-not-found]
+
+
+QUANTILES = {"min": 0.0, "p25": 0.25, "p50": 0.50, "p95": 0.95, "p99": 0.99, "max": 1.0}
+
+
+def resolve_path(p: str) -> str:
+    path = Path(p)
+    if not path.is_absolute():
+        caller = os.environ.get("CALLER_PWD", "")
+        if caller:
+            path = Path(caller) / path
+    return str(path)
+
+
+def quantile_index(n, q):
+    """Index into a length-n sorted list at quantile q (0..1)."""
+    if n == 0:
+        return 0
+    if q <= 0:
+        return 0
+    if q >= 1:
+        return n - 1
+    return int(q * (n - 1))
+
+
+def preview_value(value: bytes, n: int, raw: bool):
+    """Return a printable preview of `value`."""
+    if raw:
+        try:
+            return value.decode("utf-8")
+        except UnicodeDecodeError:
+            return f"<binary, {len(value)} bytes>\n{value.hex()}"
+    truncated = value[:n]
+    try:
+        text = truncated.decode("utf-8", errors="replace").replace("\n", " ")
+        suffix = " ..." if len(value) > n else ""
+        return text + suffix
+    except UnicodeDecodeError:
+        return f"<binary, hex first {min(n, len(value))} bytes> {truncated.hex()}"
+
+
+def display_entry(key: bytes, value: bytes, label: str, bytes_cap: int, raw: bool):
+    print(f"=== {label}: key={key!r}  value={len(value):,} bytes ===")
+    print(f"  {preview_value(value, bytes_cap, raw)}")
+    print()
+
+
+def main():
+    path_arg = os.environ.get("usage_file", "")
+    if not path_arg:
+        print("error: <file> argument required", file=sys.stderr)
+        sys.exit(2)
+
+    cdb_path = resolve_path(path_arg)
+    if not Path(cdb_path).exists():
+        print(f"error: file not found: {cdb_path}", file=sys.stderr)
+        sys.exit(2)
+
+    key_arg = os.environ.get("usage_key", "")
+    at_arg = os.environ.get("usage_at", "")
+    bytes_arg = os.environ.get("usage_bytes", "")
+    raw = os.environ.get("usage_raw", "") == "true"
+    json_out = os.environ.get("usage_json", "") == "true"
+    bytes_cap = int(bytes_arg) if bytes_arg else 240
+
+    with open(cdb_path, "rb") as f:
+        reader = cdblib.Reader(f.read())
+
+        if key_arg:
+            value = reader.get(key_arg.encode())
+            if value is None:
+                print(f"error: key not found: {key_arg!r}", file=sys.stderr)
+                sys.exit(1)
+            if json_out:
+                print(json.dumps({
+                    "key": key_arg,
+                    "value_size_bytes": len(value),
+                    "preview": preview_value(value, bytes_cap, raw),
+                }, indent=2))
+            else:
+                display_entry(key_arg.encode(), value, "exact", bytes_cap, raw)
+            return
+
+        # Sample by size quantile.
+        sized = sorted(
+            ((k, len(reader.get(k) or b"")) for k in reader.keys()),
+            key=lambda x: x[1],
+        )
+        if not sized:
+            print("(empty cdb)")
+            return
+
+        if at_arg:
+            if at_arg not in QUANTILES:
+                print(f"error: --at must be one of {list(QUANTILES)}", file=sys.stderr)
+                sys.exit(2)
+            idx = quantile_index(len(sized), QUANTILES[at_arg])
+            key, _ = sized[idx]
+            value = reader.get(key)
+            if json_out:
+                print(json.dumps({
+                    "quantile": at_arg,
+                    "key": key.decode("utf-8", errors="replace"),
+                    "value_size_bytes": len(value),
+                    "preview": preview_value(value, bytes_cap, raw),
+                }, indent=2))
+            else:
+                display_entry(key, value, at_arg, bytes_cap, raw)
+            return
+
+        # No key, no quantile → show all six.
+        if json_out:
+            samples = []
+            for label, q in QUANTILES.items():
+                idx = quantile_index(len(sized), q)
+                key, _ = sized[idx]
+                value = reader.get(key)
+                samples.append({
+                    "quantile": label,
+                    "key": key.decode("utf-8", errors="replace"),
+                    "value_size_bytes": len(value),
+                    "preview": preview_value(value, bytes_cap, raw),
+                })
+            print(json.dumps({"file": cdb_path, "samples": samples}, indent=2))
+        else:
+            print(f"File: {cdb_path}")
+            print(f"Entries: {len(sized):,}")
+            print()
+            for label, q in QUANTILES.items():
+                idx = quantile_index(len(sized), q)
+                key, _ = sized[idx]
+                value = reader.get(key)
+                display_entry(key, value, label, bytes_cap, raw)
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,134 @@
+#!/usr/bin/env -S uv run --script
+#MISE description="Size statistics for a CDB file (key/value distributions)"
+#USAGE arg "<file>" help="Path to a CDB file"
+#USAGE flag "--json" help="Output raw JSON instead of human-readable summary"
+# /// script
+# requires-python = ">=3.10"
+# dependencies = ["pure-cdb>=4.0"]
+# ///
+
+"""Compute size statistics for a constant database (cdb) file.
+
+cdb is djb's constant-database format (https://cr.yp.to/cdb.html); Walmart's
+hosts.cdb, luatenantjsondbs.cdb, etc. all use it. This task iterates entries
+and reports the distribution of key and value sizes — useful when sizing
+new data paths that depend on cdb-shaped inputs.
+
+No interpretation of the values is done here; see `cdb peek` for that.
+"""
+
+import json
+import os
+import statistics
+import sys
+from pathlib import Path
+
+import cdblib  # type: ignore[import-not-found]
+
+
+def resolve_path(p: str) -> str:
+    """Resolve `p` relative to CALLER_PWD when not absolute."""
+    path = Path(p)
+    if not path.is_absolute():
+        caller = os.environ.get("CALLER_PWD", "")
+        if caller:
+            path = Path(caller) / path
+    return str(path)
+
+
+def percentile(sorted_values, pct):
+    """Linear-interpolation percentile of a pre-sorted list."""
+    if not sorted_values:
+        return 0
+    if len(sorted_values) == 1:
+        return sorted_values[0]
+    k = (len(sorted_values) - 1) * (pct / 100.0)
+    f = int(k)
+    c = min(f + 1, len(sorted_values) - 1)
+    if f == c:
+        return sorted_values[f]
+    return sorted_values[f] + (sorted_values[c] - sorted_values[f]) * (k - f)
+
+
+def fmt_bytes(n):
+    """Human-readable bytes."""
+    if n < 1024:
+        return f"{int(n)} B"
+    if n < 1024 * 1024:
+        return f"{n / 1024:.1f} KB"
+    return f"{n / (1024 * 1024):.2f} MB"
+
+
+def main():
+    path_arg = os.environ.get("usage_file", "")
+    if not path_arg:
+        print("error: <file> argument required", file=sys.stderr)
+        sys.exit(2)
+    json_out = os.environ.get("usage_json", "") == "true"
+
+    cdb_path = resolve_path(path_arg)
+    if not Path(cdb_path).exists():
+        print(f"error: file not found: {cdb_path}", file=sys.stderr)
+        sys.exit(2)
+
+    file_size = Path(cdb_path).stat().st_size
+
+    key_sizes = []
+    value_sizes = []
+
+    with open(cdb_path, "rb") as f:
+        reader = cdblib.Reader(f.read())
+        for key in reader.keys():
+            key_sizes.append(len(key))
+            # iteritems yields all values; iter() gives the first per key.
+            # hosts.cdb is single-value-per-key by convention, so iter() is fine.
+            value = reader.get(key)
+            value_sizes.append(len(value) if value else 0)
+
+    key_sizes.sort()
+    value_sizes.sort()
+    entry_count = len(key_sizes)
+
+    def dist(values, label):
+        return {
+            "label": label,
+            "count": len(values),
+            "min": values[0] if values else 0,
+            "p50": int(percentile(values, 50)),
+            "p95": int(percentile(values, 95)),
+            "p99": int(percentile(values, 99)),
+            "max": values[-1] if values else 0,
+            "mean": int(statistics.mean(values)) if values else 0,
+            "total": sum(values),
+        }
+
+    report = {
+        "file": cdb_path,
+        "file_size_bytes": file_size,
+        "entry_count": entry_count,
+        "keys": dist(key_sizes, "key"),
+        "values": dist(value_sizes, "value"),
+    }
+
+    if json_out:
+        print(json.dumps(report, indent=2))
+        return
+
+    print(f"File:    {cdb_path}")
+    print(f"Size:    {fmt_bytes(file_size)} ({file_size:,} bytes)")
+    print(f"Entries: {entry_count:,}")
+    print()
+    for kind in ("keys", "values"):
+        d = report[kind]
+        print(f"  {kind:>6}: "
+              f"min={fmt_bytes(d['min'])}  "
+              f"p50={fmt_bytes(d['p50'])}  "
+              f"p95={fmt_bytes(d['p95'])}  "
+              f"p99={fmt_bytes(d['p99'])}  "
+              f"max={fmt_bytes(d['max'])}  "
+              f"mean={fmt_bytes(d['mean'])}  "
+              f"total={fmt_bytes(d['total'])}")
+
+
+if __name__ == "__main__":
+    main()
