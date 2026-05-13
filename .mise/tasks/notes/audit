@@ -44,7 +44,12 @@ LONG_NOTE_THRESHOLD = 300
 # references, not local note links.
 external_link_prefixes = ("KnickKnackLabs/", "jdx/", "ricon-family/", "Torbit/", "vn5a6e7/")
 external_link_exact = {"ABORT", "X", "Y", "Z"}
-external_or_cross_home_targets = {"fold", "home", "or-home"}
+# Cross-home wikilinks point at the other shared repo (fold) or
+# agent home repos. Names of other home repos are not authoritatively
+# discoverable from inside den, so we accept some false-positive
+# "missing" hits for agent-home stems (`zeke`, `ikma`, etc.) rather
+# than hardcode a list that will drift.
+external_or_cross_home_targets = {"fold", "home"}
 
 callout_marker_re = re.compile(
     r"^\s*>+\s*\[!(todo|question|warning|info|success|abstract|tip|attention|note|example)\]",
@@ -86,23 +91,17 @@ print("\nAgent identity drift (agent:list vs notes/*.md)")
 if not registered_agents:
     print("  (skipped: `mise run agent:list` returned no agents)")
 else:
-    # Identity files are named <agent>.md. Some agents may use
-    # alternative casings; check both lowercase and as-is.
+    # Forward direction only: every agent in `agent:list` should have
+    # a notes/<name>.md. The inverse check (note exists but agent
+    # not registered) would need an inventory of which notes are
+    # identity-shaped, which only `agent:list` can authoritatively
+    # provide -- so we let `agent:list` be the single source of truth.
     identity_notes = {p.stem for p in notes}
     missing_notes = sorted(a for a in registered_agents if a not in identity_notes)
-    orphan_notes = sorted(
-        n for n in identity_notes
-        if n in {"baby-joel", "brownie", "c0da", "ikma", "johnson", "junior",
-                 "k7r2", "or", "quick", "rho", "x1f9", "zeke"}
-        and n not in registered_agents
-    )
     if missing_notes:
         for a in missing_notes:
             print(f"  registered agent has no identity note: {a}.md")
-    if orphan_notes:
-        for n in orphan_notes:
-            print(f"  identity note has no registered agent: {n}.md")
-    if not missing_notes and not orphan_notes:
+    else:
         print(f"  none ({len(registered_agents)} agents, all have identity notes)")
 
 print("\nBULLETIN.md thread status counts")
