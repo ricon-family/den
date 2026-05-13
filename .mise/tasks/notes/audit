@@ -1,0 +1,191 @@
+#!/usr/bin/env bash
+#MISE description="Audit den notes for gardening signals"
+set -euo pipefail
+
+# Capture `mise run agent:list` for the agent-identity drift check.
+# Done in bash (not Python) so the agent:list task's own mise
+# environment resolves correctly.
+AGENT_LIST="$(mise run agent:list 2>/dev/null | tr -d '\r' || true)"
+export AGENT_LIST
+
+# Capture thread-status counts for BULLETIN.md.
+BULLETIN_THREADS="$(threads ls --file notes/BULLETIN.md 2>/dev/null | grep -oE '│ [a-z]+ ' | sort | uniq -c || true)"
+export BULLETIN_THREADS
+
+python3 <<'PY'
+from pathlib import Path
+import os
+import re
+
+root = Path.cwd()
+notes_dir = root / "notes"
+notes = sorted(notes_dir.glob("*.md"))
+note_stems = {p.stem for p in notes}
+
+fence_re = re.compile(r"```.*?```", re.S)
+inline_code_re = re.compile(r"`[^`]*`")
+link_re = re.compile(r"\[\[([^\]]+)\]\]")
+frontmatter_re = re.compile(r"\A---\n(.*?)\n---\n", re.S)
+
+# Den's identity-file inventory comes from `den agent:list`; auditing
+# against the directory catches both directions of drift (agent
+# registered but no note, note but no registered agent).
+agent_list_raw = os.environ.get("AGENT_LIST", "")
+registered_agents = {
+    name.strip() for name in agent_list_raw.splitlines() if name.strip()
+}
+
+# Den's BULLETIN and Walmart cockpit are intentionally long state-
+# callout-queue documents. Threshold is "worth a look" not "must
+# trim"; raise per-file as the long-tail content grows.
+LONG_NOTE_THRESHOLD = 300
+
+# Wikilinks beginning with these prefixes are external GitHub
+# references, not local note links.
+external_link_prefixes = ("KnickKnackLabs/", "jdx/", "ricon-family/", "Torbit/", "vn5a6e7/")
+external_link_exact = {"ABORT", "X", "Y", "Z"}
+external_or_cross_home_targets = {"fold", "home", "or-home"}
+
+callout_marker_re = re.compile(
+    r"^\s*>+\s*\[!(todo|question|warning|info|success|abstract|tip|attention|note|example)\]",
+    re.I,
+)
+table_row_re = re.compile(r"^\s*\|.*\|")
+marker_re = re.compile(r"\b(TODO|FIXME|XXX|HACK|Next session TODO|Where we left off)\b", re.I)
+
+# Stale references to retired tooling. Add to this set as new
+# retirements happen.
+stale_path_re = re.compile(
+    r"\bnotes index\b"
+    r"|submodules/[a-f0-9]"
+    r"|den welcome\b"
+    r"|fold welcome\b"
+    r"|~/agents/[^/]+/(den|fold)/"  # standalone clone paths retired in favor of home modules
+)
+
+# BULLETIN.md and other intentionally-long-form notes; don't flag
+# their lifecycle callouts or table cells as TODOs.
+ignore_marker_files = {"BULLETIN.md"}
+
+print("den note audit")
+print("==============")
+print(f"notes: {len(notes)}")
+
+print(f"\nLong notes (>{LONG_NOTE_THRESHOLD} lines)")
+long_notes = []
+for path in notes:
+    line_count = len(path.read_text(errors="replace").splitlines())
+    if line_count > LONG_NOTE_THRESHOLD:
+        long_notes.append((line_count, path))
+for line_count, path in sorted(long_notes, reverse=True):
+    print(f"  {line_count:4d}  {path.relative_to(root)}")
+if not long_notes:
+    print("  none")
+
+print("\nAgent identity drift (agent:list vs notes/*.md)")
+if not registered_agents:
+    print("  (skipped: `mise run agent:list` returned no agents)")
+else:
+    # Identity files are named <agent>.md. Some agents may use
+    # alternative casings; check both lowercase and as-is.
+    identity_notes = {p.stem for p in notes}
+    missing_notes = sorted(a for a in registered_agents if a not in identity_notes)
+    orphan_notes = sorted(
+        n for n in identity_notes
+        if n in {"baby-joel", "brownie", "c0da", "ikma", "johnson", "junior",
+                 "k7r2", "or", "quick", "rho", "x1f9", "zeke"}
+        and n not in registered_agents
+    )
+    if missing_notes:
+        for a in missing_notes:
+            print(f"  registered agent has no identity note: {a}.md")
+    if orphan_notes:
+        for n in orphan_notes:
+            print(f"  identity note has no registered agent: {n}.md")
+    if not missing_notes and not orphan_notes:
+        print(f"  none ({len(registered_agents)} agents, all have identity notes)")
+
+print("\nBULLETIN.md thread status counts")
+bulletin_counts = os.environ.get("BULLETIN_THREADS", "").strip()
+if not bulletin_counts:
+    print("  (skipped: `threads ls --file notes/BULLETIN.md` produced no output)")
+else:
+    for line in bulletin_counts.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        # Each line is "N │ status " -- strip the table separator.
+        m = re.match(r"^(\d+)\s+\u2502\s+(\w+)", line)
+        if m:
+            print(f"  {int(m.group(1)):3d}  {m.group(2)}")
+        else:
+            print(f"  {line}")
+
+print("\nGardening markers")
+marker_hits = []
+for path in notes:
+    if path.name in ignore_marker_files:
+        continue
+    text = path.read_text(errors="replace")
+    for idx, raw_line in enumerate(text.splitlines(), 1):
+        if callout_marker_re.search(raw_line):
+            continue
+        if table_row_re.match(raw_line):
+            continue
+        line = inline_code_re.sub("", raw_line)
+        if marker_re.search(line):
+            marker_hits.append((path, idx, raw_line.strip()))
+for path, idx, line in marker_hits[:60]:
+    print(f"  {path.relative_to(root)}:{idx}: {line}")
+if len(marker_hits) > 60:
+    print(f"  ... {len(marker_hits) - 60} more")
+if not marker_hits:
+    print("  none")
+
+print("\nLikely local missing wikilinks")
+missing = []
+for path in notes:
+    text = path.read_text(errors="replace")
+    text = fence_re.sub("", text)
+    text = inline_code_re.sub("", text)
+    for raw in link_re.findall(text):
+        target = raw.split("|", 1)[0].split("#", 1)[0].strip()
+        if not target:
+            continue
+        if target.startswith("notes/"):
+            target_stem = Path(target).stem
+        else:
+            target_stem = target
+        if Path(target).suffix.lower() in {".png", ".jpg", ".jpeg", ".gif", ".webp", ".pdf"}:
+            continue
+        if target_stem in external_link_exact:
+            continue
+        if target_stem in external_or_cross_home_targets:
+            continue
+        if any(target.startswith(prefix) for prefix in external_link_prefixes):
+            continue
+        if target_stem not in note_stems:
+            missing.append((path, raw, target_stem))
+for path, raw, target in missing[:60]:
+    print(f"  {path.relative_to(root)}: [[{raw}]] -> {target}")
+if len(missing) > 60:
+    print(f"  ... {len(missing) - 60} more")
+if not missing:
+    print("  none")
+
+print("\nStale path phrases")
+stale_hits = []
+for path in notes:
+    for idx, line in enumerate(path.read_text(errors="replace").splitlines(), 1):
+        if stale_path_re.search(line):
+            stale_hits.append((path, idx, line.strip()))
+for path, idx, line in stale_hits[:40]:
+    print(f"  {path.relative_to(root)}:{idx}: {line}")
+if len(stale_hits) > 40:
+    print(f"  ... {len(stale_hits) - 40} more")
+if not stale_hits:
+    print("  none")
+
+print("\nDirty generated/live files")
+print("  check: git status --short && notes changes --summary")
+PY
