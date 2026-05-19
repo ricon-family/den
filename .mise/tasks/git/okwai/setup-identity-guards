@@ -1,37 +1,11 @@
 #!/usr/bin/env bash
-#MISE description="Set up identity overrides + post-commit auto-fix + pre-push guard for ~/agents/*/okwai/ clones"
+#MISE description="Install post-commit auto-fix + pre-push guard for ~/agents/*/okwai/ clones"
 #USAGE flag "--dry-run" help="Show what would change without writing anything"
-#USAGE long_about "Three-layer defence against leaking @ricon.family commits to Walmart-internal okwai:\n\n  1. ~/.gitconfig.walmart-okwai loaded via includeIf 'gitdir:~/agents/*/okwai/'\n     sets user.name/email and commit.gpgsign=false. Applies in any\n     interactive shell that respects git config (e.g. Or working\n     directly, not as a shimmer agent).\n\n  2. <clone>/.git/hooks/post-commit auto-rewrites the commit author/committer\n     when @ricon.family slips past layer 1 (e.g. shimmer agents whose\n     GIT_AUTHOR_EMAIL env vars override config). Transparent fix:\n     the agent sees a one-line message and the commit lands correctly.\n\n  3. <clone>/.git/hooks/pre-push refuses to push any commit containing\n     a @ricon.family author, regardless of how it got past layers 1+2.\n\nIdempotent: safe to re-run after pulling den, after re-cloning okwai, or\nwhen adding a new agent home. Nothing depends on den being present after\nthe task completes."
+#USAGE long_about "Two-layer defence against leaking @ricon.family commits to Walmart-internal okwai.\n\nshimmer agents run with GIT_AUTHOR_EMAIL env vars set to <agent>@ricon.family. Env vars beat git config, so no amount of git-config trickery (includeIf, etc.) can change the author at commit time. The hooks below run after / before the boundaries where it actually matters.\n\n  1. <clone>/.git/hooks/post-commit\n     Auto-rewrites the commit author/committer when @ricon.family\n     slips through. Re-runs 'git commit --amend --reset-author' with\n     Or's identity injected as command-line env vars (command-line\n     env beats inherited env). Recursion-safe via\n     OKWAI_GUARD_AMENDING sentinel. Delegates to any project-side\n     .hooks/post-commit at the end.\n     \n     The amend re-signs via each agent's per-agent overlay\n     (~/agents/<agent>/.gitconfig sets commit.gpgsign=true and\n     user.signingkey). Result: author/committer = Or Ricon (visible\n     to SWISS and similar), GPG signature = agent's key (visible to\n     'git log --show-signature' as the only attribution channel).\n\n  2. <clone>/.git/hooks/pre-push\n     Final safety net. Refuses any push containing a @ricon.family-\n     authored commit, regardless of how it got past the post-commit\n     auto-fix (e.g. commits pre-dating the install, or commits made\n     with --no-verify across both pre-commit AND post-commit).\n\nIdempotent. Re-run after pulling den, after re-cloning okwai, or\nwhen adding a new agent home. The task also cleans up legacy\n~/.gitconfig.walmart-okwai + includeIf artifacts from an earlier\ntask iteration that has been simplified out."
 
 set -euo pipefail
 
 DRY_RUN="${usage_dry_run:-false}"
-
-# ─────────────────────────────────────────────────────────────────────
-# Step 1: identity override file (loaded via includeIf in step 2)
-# ─────────────────────────────────────────────────────────────────────
-
-INCLUDE_FILE="$HOME/.gitconfig.walmart-okwai"
-# Note: signing is deliberately NOT disabled here. Author/committer get
-# normalised to Or Ricon (visible to SWISS and other Walmart systems
-# that email contributors), but the GPG signature continues to use
-# whichever agent's key is set in the per-agent overlay
-# (~/agents/<agent>/.gitconfig). That signature is the ONLY
-# attribution channel left once identity is normalised — it lets
-# `git log --show-signature` answer 'which agent actually made this
-# commit?'. The signature is git-internal metadata; Walmart's
-# SWISS-style scanners don't email based on it.
-INCLUDE_CONTENT='# Identity override for ~/agents/*/okwai/ clones.
-# Loaded by ~/.gitconfig via includeIf. Managed by den task
-# git:okwai:setup-identity-guards — re-run to refresh.
-#
-# Signing is left to the per-agent overlay so the GPG signature
-# carries agent attribution (the only channel left after author/
-# committer are normalised to Or Ricon).
-[user]
-    name = Or Ricon
-    email = or.ricon@walmart.com
-'
 
 # Content compare: `$(cat ...)` strips trailing newlines, so append a
 # sentinel byte to both sides to make the comparison exact.
@@ -40,48 +14,6 @@ file_matches() {
 	[[ -f "$file" ]] || return 1
 	[[ "$(cat "$file"; printf .)" == "${expected}." ]]
 }
-
-echo "── Step 1: identity override file ──"
-if file_matches "$INCLUDE_FILE" "$INCLUDE_CONTENT"; then
-	echo "  ✓ $INCLUDE_FILE — already up to date"
-elif [[ "$DRY_RUN" == "true" ]]; then
-	echo "  [dry-run] would write: $INCLUDE_FILE"
-else
-	printf '%s' "$INCLUDE_CONTENT" >"$INCLUDE_FILE"
-	echo "  ✓ wrote $INCLUDE_FILE"
-fi
-
-# ─────────────────────────────────────────────────────────────────────
-# Step 2: ensure includeIf block exists in ~/.gitconfig
-# ─────────────────────────────────────────────────────────────────────
-#
-# Match every clone under ~/agents/*/okwai/ — covers current agents
-# (zeke, baby-joel, ikma) plus any future ones added on this machine.
-# `gitdir:~/...` expands ~ to $HOME at evaluation time.
-
-INCLUDE_PATTERN='gitdir:~/agents/*/okwai/'
-CONFIG_KEY="includeIf.$INCLUDE_PATTERN.path"
-# Intentionally literal `~` — git resolves it to $HOME at read time,
-# which keeps the include file portable if the home directory ever
-# changes. Don't substitute $HOME here.
-# shellcheck disable=SC2088
-EXPECTED_VALUE='~/.gitconfig.walmart-okwai'
-
-echo ""
-echo "── Step 2: ~/.gitconfig includeIf ──"
-current_value="$(git config --global --get "$CONFIG_KEY" 2>/dev/null || true)"
-if [[ "$current_value" == "$EXPECTED_VALUE" ]]; then
-	echo "  ✓ includeIf for okwai clones already present"
-elif [[ "$DRY_RUN" == "true" ]]; then
-	echo "  [dry-run] would set: git config --global $CONFIG_KEY $EXPECTED_VALUE"
-else
-	git config --global "$CONFIG_KEY" "$EXPECTED_VALUE"
-	echo "  ✓ added includeIf for okwai clones"
-fi
-
-# ─────────────────────────────────────────────────────────────────────
-# Step 3: pre-push hook in each ~/agents/*/okwai/ clone
-# ─────────────────────────────────────────────────────────────────────
 
 # ─────────────────────────────────────────────────────────────────────
 # Hook source-of-truth blocks (heredocs read into variables).
@@ -94,8 +26,11 @@ read -r -d '' POST_COMMIT_CONTENT <<'POST_COMMIT_EOF' || true
 # When shimmer's GIT_AUTHOR_EMAIL env var (e.g. zeke@ricon.family)
 # overrides git config at commit time, this hook detects the mismatch
 # right after the commit object is created and rewrites it via
-# `git commit --amend` with the correct identity injected as env vars
-# (env on the command line beats inherited env).
+# `git commit --amend --reset-author` with the correct identity
+# injected as command-line env vars (command-line env beats inherited
+# env). The amend re-signs via the per-agent overlay (signingkey +
+# commit.gpgsign=true), so author/committer = Or Ricon while the GPG
+# signature still attributes to the actual agent.
 #
 # Installed by den's git:okwai:setup-identity-guards task — re-run to
 # refresh.
@@ -178,7 +113,7 @@ exit $fail
 PRE_PUSH_EOF
 
 # ─────────────────────────────────────────────────────────────────────
-# Step 3: install hooks in each ~/agents/*/okwai/ clone
+# Step 1: install hooks in each ~/agents/*/okwai/ clone
 # ─────────────────────────────────────────────────────────────────────
 
 install_hook() {
@@ -194,8 +129,7 @@ install_hook() {
 	fi
 }
 
-echo ""
-echo "── Step 3: hooks in each okwai clone ──"
+echo "── Step 1: hooks in each okwai clone ──"
 shopt -s nullglob
 clones=("$HOME"/agents/*/okwai/.git)
 if [[ ${#clones[@]} -eq 0 ]]; then
@@ -208,7 +142,44 @@ for git_dir in "${clones[@]}"; do
 	install_hook "$git_dir/hooks/pre-push" "$PRE_PUSH_CONTENT" "$rel" "pre-push"
 done
 
+# ─────────────────────────────────────────────────────────────────────
+# Step 2: clean up legacy includeIf + override file from earlier
+#         task iteration (harmless to keep, but tidier without).
+# ─────────────────────────────────────────────────────────────────────
+
+LEGACY_INCLUDE_FILE="$HOME/.gitconfig.walmart-okwai"
+LEGACY_INCLUDE_PATTERN='gitdir:~/agents/*/okwai/'
+LEGACY_CONFIG_KEY="includeIf.$LEGACY_INCLUDE_PATTERN.path"
+
+legacy_value="$(git config --global --get "$LEGACY_CONFIG_KEY" 2>/dev/null || true)"
+
+if [[ -f "$LEGACY_INCLUDE_FILE" ]] || [[ -n "$legacy_value" ]]; then
+	echo ""
+	echo "── Step 2: clean up legacy includeIf layer ──"
+
+	if [[ -f "$LEGACY_INCLUDE_FILE" ]]; then
+		if [[ "$DRY_RUN" == "true" ]]; then
+			echo "  [dry-run] would remove: $LEGACY_INCLUDE_FILE"
+		else
+			rm -f "$LEGACY_INCLUDE_FILE"
+			echo "  ✓ removed $LEGACY_INCLUDE_FILE"
+		fi
+	fi
+
+	if [[ -n "$legacy_value" ]]; then
+		if [[ "$DRY_RUN" == "true" ]]; then
+			echo "  [dry-run] would unset: git config --global --unset-all '$LEGACY_CONFIG_KEY'"
+		else
+			# --unset-all removes every entry; --remove-section would
+			# leave the empty [includeIf "..."] header behind.
+			git config --global --unset-all "$LEGACY_CONFIG_KEY"
+			echo "  ✓ unset includeIf from ~/.gitconfig"
+		fi
+	fi
+fi
+
 echo ""
-echo "Done. Verify with a probe commit (auto-fix should rewrite the bad author):"
-echo "  cd ~/agents/<agent>/okwai && git commit --allow-empty -m 'identity probe'"
-echo "  git log -1 --format='%an <%ae>'   # should print: Or Ricon <or.ricon@walmart.com>"
+echo "Done. Verify with a probe commit:"
+echo "  cd ~/agents/<agent>/okwai && git commit --allow-empty --no-verify -m 'identity probe'"
+echo "  git log -1 --format='%an <%ae>'            # → Or Ricon <or.ricon@walmart.com>"
+echo "  git log -1 --show-signature 2>&1 | grep gpg # → signed by the agent's key"
