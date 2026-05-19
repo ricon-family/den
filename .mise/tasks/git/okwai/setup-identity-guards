@@ -41,6 +41,15 @@ read -r -d '' POST_COMMIT_CONTENT <<'POST_COMMIT_EOF' || true
 
 set -euo pipefail
 
+# Skip during rebase / cherry-pick / merge — git refuses --amend in
+# those states. Rebase replays preserve the author from the source
+# commit (already guard-amended at original-commit time); foreign-
+# branch picks of unguarded commits are caught by the pre-push guard.
+git_dir=$(git rev-parse --git-dir)
+for state in rebase-merge rebase-apply CHERRY_PICK_HEAD MERGE_HEAD REVERT_HEAD; do
+	[[ -e "$git_dir/$state" ]] && exit 0
+done
+
 author_email=$(git log -1 --format='%ae')
 committer_email=$(git log -1 --format='%ce')
 
