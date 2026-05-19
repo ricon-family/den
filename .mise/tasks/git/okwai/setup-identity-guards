@@ -12,14 +12,25 @@ DRY_RUN="${usage_dry_run:-false}"
 # ─────────────────────────────────────────────────────────────────────
 
 INCLUDE_FILE="$HOME/.gitconfig.walmart-okwai"
+# Note: signing is deliberately NOT disabled here. Author/committer get
+# normalised to Or Ricon (visible to SWISS and other Walmart systems
+# that email contributors), but the GPG signature continues to use
+# whichever agent's key is set in the per-agent overlay
+# (~/agents/<agent>/.gitconfig). That signature is the ONLY
+# attribution channel left once identity is normalised — it lets
+# `git log --show-signature` answer 'which agent actually made this
+# commit?'. The signature is git-internal metadata; Walmart's
+# SWISS-style scanners don't email based on it.
 INCLUDE_CONTENT='# Identity override for ~/agents/*/okwai/ clones.
 # Loaded by ~/.gitconfig via includeIf. Managed by den task
 # git:okwai:setup-identity-guards — re-run to refresh.
+#
+# Signing is left to the per-agent overlay so the GPG signature
+# carries agent attribution (the only channel left after author/
+# committer are normalised to Or Ricon).
 [user]
     name = Or Ricon
     email = or.ricon@walmart.com
-[commit]
-    gpgsign = false
 '
 
 # Content compare: `$(cat ...)` strips trailing newlines, so append a
