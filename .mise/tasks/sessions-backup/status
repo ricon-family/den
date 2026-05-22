@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+#MISE description="Show local-pool sizes and what's currently backed up in B2"
+#USAGE flag "--remote" default=#false help="Also list remote backups (network round-trip)"
+set -euo pipefail
+
+# shellcheck disable=SC1091
+source "$MISE_CONFIG_ROOT/.mise/tasks/sessions-backup/lib.sh"
+
+WITH_REMOTE="${usage_remote:-false}"
+
+show_pool() {
+  local pool="$1" root
+  root=$(source_root "$pool")
+  if [ ! -d "$root" ]; then
+    printf '  %-18s (missing): %s\n' "$pool" "$root"
+    return 0
+  fi
+
+  local size_bytes file_count
+  size_bytes=$(du -sk "$root" | awk '{print $1 * 1024}')
+  file_count=$(find "$root" -type f | wc -l | tr -d ' ')
+  printf '  %-18s %8s   %6d files   %s\n' \
+    "$pool" "$(bytes_human "$size_bytes")" "$file_count" "$root"
+}
+
+section "Local pools"
+show_pool claude-projects
+show_pool wibey-sessions
+show_pool pi-sessions
+
+if [ "$WITH_REMOTE" = "true" ]; then
+  ensure_b2
+  # Surface the active alias so a misconfigured shell doesn't silently target
+  # the wrong bucket; see [[sessions-backup]].
+  section "Remote (alias=$B2_ALIAS, bucket=$B2_BUCKET / backups/)"
+  if ! mc ls --recursive "$B2_ALIAS/$B2_BUCKET/backups/" 2>&1; then
+    echo "  (none)"
+  fi
+else
+  printf '\n(pass --remote to also list backups in B2)\n'
+fi

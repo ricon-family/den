@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+#MISE description="List backups currently in B2 (prefix: backups/)"
+#USAGE flag "--prefix <prefix>" default="backups/" help="Object-key prefix to list"
+set -euo pipefail
+
+# shellcheck disable=SC1091
+source "$MISE_CONFIG_ROOT/.mise/tasks/sessions-backup/lib.sh"
+
+ensure_b2
+
+PREFIX="${usage_prefix:-backups/}"
+
+section "Remote: $B2_BUCKET / $PREFIX"
+# `blobs list` is non-recursive (matches `mc ls` default); use mc directly
+# with --recursive so nested object paths flatten into one line per blob.
+if ! mc ls --recursive "$B2_ALIAS/$B2_BUCKET/$PREFIX" 2>&1; then
+  echo "(empty)"
+fi

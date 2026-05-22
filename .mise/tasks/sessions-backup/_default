@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+#MISE description="Default: show local + remote backup status"
+set -euo pipefail
+
+# Delegate to `status --remote` so a bare `mise run sessions-backup` gives a
+# useful overview. Routing through mise (not `exec`-ing the sibling) so
+# #USAGE flag parsing happens normally.
+exec mise run sessions-backup:status --remote

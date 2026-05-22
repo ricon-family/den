@@ -1,0 +1,97 @@
+#!/usr/bin/env bash
+#MISE description="Backup pi sessions (~/.pi/agent/sessions) — optionally restricted to a date range"
+#USAGE flag "--since <date>" default="" help="Include only files with mtime >= YYYY-MM-DD 00:00 (omit for full snapshot)"
+#USAGE flag "--until <date>" default="" help="Include only files with mtime <= YYYY-MM-DD 23:59 (default: today)"
+#USAGE flag "--dry-run" default=#false help="Build the tarball locally and print sizes, but skip the B2 upload"
+set -euo pipefail
+
+# shellcheck disable=SC1091
+source "$MISE_CONFIG_ROOT/.mise/tasks/sessions-backup/lib.sh"
+
+SINCE="${usage_since:-}"
+UNTIL="${usage_until:-$(date '+%Y-%m-%d')}"
+DRY_RUN="${usage_dry_run:-false}"
+
+MANIFEST_PY="$MISE_CONFIG_ROOT/.mise/tasks/sessions-backup/manifest.py"
+ROOT=$(source_root pi-sessions)
+
+if [ ! -d "$ROOT" ]; then
+  echo "error: $ROOT does not exist" >&2
+  exit 1
+fi
+
+# Compute timestamp window. Lower bound 0 means "from the beginning of time."
+if [ -n "$SINCE" ]; then
+  START_TS=$(date_to_ts "$SINCE" start)
+else
+  START_TS=0
+fi
+END_TS=$(date_to_ts "$UNTIL" end)
+
+# Object-key shape: "full-<until>" for first-ever full snapshot;
+# "incremental-<since>-to-<until>" otherwise. Lets `list` distinguish at a glance.
+if [ -z "$SINCE" ]; then
+  STEM="full-$UNTIL"
+else
+  STEM="incremental-$SINCE-to-$UNTIL"
+fi
+
+section "Pi sessions backup"
+echo "root:   $ROOT"
+echo "since:  ${SINCE:-<beginning>}  (ts=$START_TS)"
+echo "until:  $UNTIL  (ts=$END_TS)"
+echo "key:    backups/pi/$STEM.tar.gz"
+
+WORK=$(mktemp -d -t sessions-backup-pi)
+trap 'rm -rf "$WORK"' EXIT
+
+FILELIST="$WORK/files.txt"
+# Paths in FILELIST are relative to $ROOT so the tarball + manifest are portable.
+section "Scanning $ROOT"
+count=0
+while IFS= read -r -d '' f; do
+  mtime=$(stat -f %m "$f")
+  if [ "$mtime" -ge "$START_TS" ] && [ "$mtime" -le "$END_TS" ]; then
+    printf '%s\n' "${f#"$ROOT"/}" >> "$FILELIST"
+    count=$((count + 1))
+  fi
+done < <(find "$ROOT" -type f -name '*.jsonl' -print0)
+
+if [ "$count" -eq 0 ]; then
+  echo "no files in window — nothing to back up"
+  exit 0
+fi
+echo "matched: $count files"
+
+section "Building manifest"
+MANIFEST="$WORK/$STEM.manifest.json"
+python3 "$MANIFEST_PY" "$ROOT" "$MANIFEST" "$FILELIST"
+
+# Add window metadata so we can scan "what date range is backed up?" without
+# parsing the object-key filename.
+jq --arg since "${SINCE:-}" --arg until "$UNTIL" \
+   '. + {since: ($since | if . == "" then null else . end), until: $until}' \
+   "$MANIFEST" > "$MANIFEST.tmp" && mv "$MANIFEST.tmp" "$MANIFEST"
+
+section "Building tarball"
+TARBALL="$WORK/$STEM.tar.gz"
+(cd "$ROOT" && tar czf "$TARBALL" -T "$FILELIST")
+tar_bytes=$(stat -f %z "$TARBALL")
+echo "tarball: $(bytes_human "$tar_bytes") at $TARBALL"
+
+if [ "$DRY_RUN" = "true" ]; then
+  section "Dry run — skipping upload"
+  echo "Inspect: tar tzf '$TARBALL' | head"
+  echo "         jq '.file_count, .total_bytes, .earliest_mtime, .latest_mtime' '$MANIFEST'"
+  exit 0
+fi
+
+ensure_b2
+
+section "Uploading"
+echo "manifest..."
+blobs put "backups/pi/$STEM.manifest.json" "$MANIFEST"
+echo "tarball..."
+blobs put "backups/pi/$STEM.tar.gz" "$TARBALL"
+
+section "Done"
