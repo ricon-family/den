@@ -121,9 +121,20 @@ setup() {
   [[ "$output" == *"B2_ALIAS unset"* ]]
 }
 
-@test "ensure_b2: short-circuits when B2_SETUP_DONE=1" {
-  B2_ALIAS="zeke" B2_SETUP_DONE=1 run ensure_b2
+@test "ensure_b2: short-circuits when B2_SETUP_DONE=1 (does not touch keychain)" {
+  # Use a deliberately-missing alias so a no-op short-circuit succeeds
+  # while a real keychain lookup would fail. Proves the short-circuit fires.
+  B2_ALIAS="__nope_does_not_exist__" B2_SETUP_DONE=1 run ensure_b2
   [ "$status" -eq 0 ]
+}
+
+@test "ensure_b2: with B2_SETUP_DONE unset, missing alias would hit keychain (control)" {
+  # Control case: same fake alias, but no short-circuit — must fail trying
+  # to look up keychain entries that don't exist.
+  unset B2_SETUP_DONE
+  B2_ALIAS="__nope_does_not_exist__" run ensure_b2
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"missing in keychain"* ]]
 }
 
 # ----- manifest.py -----
