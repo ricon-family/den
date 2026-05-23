@@ -1,0 +1,86 @@
+#!/usr/bin/env bash
+#MISE description="One-shot backup of the wibey-era session pools (~/.claude/projects + ~/.wibey/sessions)"
+#USAGE flag "--date <date>" default="2026-03-27" help="Cutoff label used in the object-key filename (the pool is frozen, so this is just a tag)"
+#USAGE flag "--dry-run" default=#false help="Build tarballs locally and print sizes, but skip the B2 upload"
+#USAGE flag "--skip-claude" default=#false help="Skip the ~/.claude/projects pool"
+#USAGE flag "--skip-wibey" default=#false help="Skip the ~/.wibey/sessions pool"
+set -euo pipefail
+
+# shellcheck disable=SC1091
+source "$MISE_CONFIG_ROOT/.mise/tasks/sessions-backup/lib.sh"
+
+DATE="${usage_date:-2026-03-27}"
+DRY_RUN="${usage_dry_run:-false}"
+SKIP_CLAUDE="${usage_skip_claude:-false}"
+SKIP_WIBEY="${usage_skip_wibey:-false}"
+
+# --date flows into local tarball paths; constrain to YYYY-MM-DD so a value
+# like '../foo' can't escape $WORK.
+if [[ ! "$DATE" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+  echo "error: --date must be YYYY-MM-DD (got '$DATE')" >&2
+  exit 1
+fi
+
+MANIFEST_PY="$MISE_CONFIG_ROOT/.mise/tasks/sessions-backup/manifest.py"
+
+if [ "$DRY_RUN" != "true" ]; then
+  ensure_b2
+fi
+
+WORK=$(mktemp -d -t sessions-backup-wibey)
+trap 'rm -rf "$WORK"' EXIT
+
+# Tar one pool, write its manifest, optionally upload.
+#   $1 = pool name      (e.g. claude-projects)
+#   $2 = local root     (e.g. ~/.claude/projects)
+#   $3 = key prefix     (e.g. backups/wibey-era/claude-projects)
+backup_pool() {
+  local pool="$1" root="$2" key_prefix="$3"
+  local stem="${key_prefix##*/}-$DATE"
+  local tarball="$WORK/$stem.tar.gz"
+  local manifest="$WORK/$stem.manifest.json"
+
+  section "Pool: $pool"
+  if [ ! -d "$root" ]; then
+    echo "skip: $root does not exist"
+    return 0
+  fi
+
+  local src_bytes
+  src_bytes=$(du -sk "$root" | awk '{print $1 * 1024}')
+  echo "source: $root ($(bytes_human "$src_bytes") uncompressed)"
+
+  echo "building manifest..."
+  python3 "$MANIFEST_PY" "$root" "$manifest"
+
+  echo "creating tarball..."
+  # Tar from the parent so the archive has a sensible top-level dir name.
+  local parent base
+  parent=$(dirname "$root")
+  base=$(basename "$root")
+  (cd "$parent" && tar czf "$tarball" "$base")
+  local tar_bytes
+  tar_bytes=$(stat -f %z "$tarball")
+  echo "tarball:  $(bytes_human "$tar_bytes") at $tarball"
+  echo "manifest: $manifest"
+
+  if [ "$DRY_RUN" = "true" ]; then
+    echo "(dry-run: skipping upload)"
+    return 0
+  fi
+
+  echo "uploading manifest..."
+  blobs put "$key_prefix-$DATE.manifest.json" "$manifest"
+  echo "uploading tarball..."
+  blobs put "$key_prefix-$DATE.tar.gz" "$tarball"
+}
+
+if [ "$SKIP_CLAUDE" != "true" ]; then
+  backup_pool claude-projects "$(source_root claude-projects)" backups/wibey-era/claude-projects
+fi
+
+if [ "$SKIP_WIBEY" != "true" ]; then
+  backup_pool wibey-sessions "$(source_root wibey-sessions)" backups/wibey-era/wibey-sessions
+fi
+
+section "Done"
