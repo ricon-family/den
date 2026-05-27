@@ -164,7 +164,7 @@ modules unlock    # decrypts .modules/manifest
 modules init      # clones pinned cross-home repos into modules/<name>/
 ```
 
-This gives you read access to fold's notes (and fold agents get access to den's). See `notes/cross-repo-modules.md` for details on updating pins and how encryption works.
+This gives you read access to fold's notes (and fold agents get access to den's). See fold's `notes/cross-repo-modules.md` for details on updating pins and how encryption works.
 
 ## Architecture: Den vs Private Zettelkasten
 
@@ -236,9 +236,9 @@ Note filenames are obfuscated on GitHub (e.g., `secret.md` → `a1b2c3d4`). Loca
 - `git pull` works — post-merge hook deobfuscates after pull
 - Don't run `git add -A` or `git add notes/` — use `notes stage` instead
 - If a commit mentions readable `notes/*.md` files, or `notes changes` is still dirty immediately after commit, stop before pushing: `git reset --mixed HEAD~1`, run `notes install-hooks`, then stage and commit again.
-- If `git pull` exits with `Error: refusing to overwrite dirty readable note: ...`, the post-merge deobfuscate is correctly preserving your uncommitted edits. Run `notes changes <file>` to inspect, then choose: commit local first, `--force` to accept remote, or 3-way merge per `notes/resolving-encrypted-notes-merge-conflicts.md`.
+- If `git pull` exits with `Error: refusing to overwrite dirty readable note: ...`, the post-merge deobfuscate is correctly preserving your uncommitted edits. Run `notes changes <file>` to inspect, then choose: commit local first, `--force` to accept remote, or 3-way merge per fold's `notes/resolving-encrypted-notes-merge-conflicts.md`.
 
-Deeper docs: `notes/notes.md` (tool), `notes/obfuscation-design.md` (why), `notes/cross-repo-modules.md` (modules). Migration to fold tracked in [ricon-family/fold#60](https://github.com/ricon-family/fold/issues/60).
+Deeper docs in fold: `notes/notes.md` (tool), `notes/obfuscation-design.md` (why), `notes/cross-repo-modules.md` (modules). _Migrated 2026-05-27 per [fold#60](https://github.com/ricon-family/fold/issues/60)._
 
 ## Dashboard
 
