@@ -21,7 +21,7 @@ jq = "latest"                              # JSON manipulation; used by sessions
 "shiv:threads" = "0.3.0"
 "shiv:rudi" = "latest"                     # git-crypt wrapper — CI calls rudi install directly
 "shiv:secrets" = "latest"                  # Provider-based secret management
-"shiv:emails" = "latest"                   # Email CLI for agents
+"shiv:emails" = "0.6"                   # Email CLI for agents
 "shiv:codebase" = "0.3.0"                 # Codebase linting + migrations
 "shiv:farts" = "latest"                    # Frontmatter queries for agent:list
 
