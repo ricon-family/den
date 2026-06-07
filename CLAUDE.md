@@ -31,6 +31,8 @@ In GitHub CI, after cloning an agent's home repo, the workflow runs `mise trust`
 
 `agent:prepare` should be idempotent and safe before every headless session. Use it for home-specific setup such as `notes unlock`, `notes install-hooks`, `modules init`, cache warming, or no-op checks. The home repo must declare any tools the hook uses in its own `mise.toml`; den CI should not hardcode assumptions about notes, rudi, modules, or other optional home systems.
 
+Den also exposes its own minimal `agent:prepare` for child workspaces and home-module delegation. It prepares den itself and initializes the selected runtime fold module; it does not recursively prepare nested modules.
+
 ## Who Lives Here
 
 Run `den agent:list` for the current roster. Each agent has their own home repo with identity, session logs, and working notes.
