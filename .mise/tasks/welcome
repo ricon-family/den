@@ -114,7 +114,15 @@ printf "Branch,Remote,Issues,Encryption,Notes\n%s,%s,%s,%s,%s\n" \
 
 # ━━━ Residents ━━━
 section "Residents"
-agents=$(cd "$DEN_DIR" && mise run -q agent:list 2>/dev/null || true)
+agent_list_err=$(mktemp)
+if ! agents=$(cd "$DEN_DIR" && mise run -q agent:list 2>"$agent_list_err"); then
+  gum style --foreground 214 "⚠ agent:list unavailable; residents omitted"
+  if [ -s "$agent_list_err" ]; then
+    sed 's/^/  /' "$agent_list_err" >&2
+  fi
+  agents=""
+fi
+rm -f "$agent_list_err"
 if [ -n "$agents" ]; then
   resident_rows=""
   while IFS= read -r name; do
@@ -128,15 +136,27 @@ if [ -n "$agents" ]; then
 fi
 
 # ━━━ HUMAN.md ━━━
-HUMAN_FILE=$(cd "$DEN_DIR" && mise run -q human 2>/dev/null || true)
+human_err=$(mktemp)
+if [ -z "${HUMAN_MD:-}" ]; then
+  HUMAN_FILE=""
+elif ! HUMAN_FILE=$(cd "$DEN_DIR" && mise run -q human 2>"$human_err"); then
+  gum style --foreground 214 "⚠ unable to resolve HUMAN.md path" >&2
+  if [ -s "$human_err" ]; then
+    sed 's/^/  /' "$human_err" >&2
+  fi
+  HUMAN_FILE=""
+fi
 if [ -n "$HUMAN_FILE" ] && [ -f "$HUMAN_FILE" ]; then
   thread_summary=$(threads status --file "$HUMAN_FILE" 2>/dev/null || echo "")
   section "📝 HUMAN.md  ($thread_summary)"
-  threads list --file "$HUMAN_FILE" 2>/dev/null || true
+  if ! threads list --file "$HUMAN_FILE" 2>/dev/null; then
+    gum style --foreground 214 "⚠ unable to list HUMAN.md threads"
+  fi
 else
   section "📝 HUMAN.md"
   gum style --faint "(HUMAN_MD not set — see: mise run human)"
 fi
+rm -f "$human_err"
 
 # ━━━ Chat ━━━
 section "💬 Chat"
@@ -180,7 +200,9 @@ if [ -d "$DEN_DIR/modules" ]; then
     name=$(basename "$mod_path")
 
     # Pin freshness
-    git -C "$mod_path" fetch -q 2>/dev/null || true
+    if ! git -C "$mod_path" fetch -q 2>/dev/null; then
+      gum style --foreground 214 "⚠ ${name}: could not refresh origin before pin freshness check" >&2
+    fi
     default_branch=$(git -C "$mod_path" symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@')
     default_branch=${default_branch:-main}
     behind=$(git -C "$mod_path" rev-list --count "HEAD..origin/${default_branch}" 2>/dev/null || echo 0)
@@ -196,8 +218,11 @@ if [ -d "$DEN_DIR/modules" ]; then
     elif [ -f "$mod_path/.git/hooks/pre-commit" ]; then
       hook_status="✓ installed"
     else
-      (cd "$mod_path" && notes install-hooks >/dev/null 2>&1) || true
-      hook_status="⚠ installed (was missing)"
+      if cd "$mod_path" && notes install-hooks >/dev/null 2>&1; then
+        hook_status="⚠ installed (was missing)"
+      else
+        hook_status="⚠ install failed → cd modules/${name} && notes install-hooks"
+      fi
     fi
 
     module_rows+="${name},${pin_status},${hook_status}"$'\n'
