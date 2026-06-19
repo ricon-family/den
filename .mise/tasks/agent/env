@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 #MISE description="Output environment variables for an agent"
-#USAGE arg "[agent]" help="Agent name (defaults to GIT_AUTHOR_NAME)"
-set -eo pipefail
+#USAGE arg "[agent]" default="" help="Agent name (defaults to GIT_AUTHOR_NAME)"
+set -euo pipefail
 
-AGENT="${usage_agent:-$GIT_AUTHOR_NAME}"
+AGENT="${usage_agent:-${GIT_AUTHOR_NAME:-}}"
 
 if [ -z "$AGENT" ]; then
   echo "Error: no agent specified and GIT_AUTHOR_NAME not set" >&2
@@ -12,9 +12,18 @@ if [ -z "$AGENT" ]; then
   exit 1
 fi
 
-# Validate agent exists in this home
-AGENTS=$(mise run -q agent:list 2>/dev/null) || true
-if [ -n "$AGENTS" ] && ! echo "$AGENTS" | grep -qx "$AGENT"; then
+# Validate agent exists in this home when identity notes are readable.
+# agent:env is commonly evaluated during early startup, so locked/missing notes
+# are a degraded probe rather than a hard failure; make that degradation visible.
+AGENT_LIST_ERR=$(mktemp)
+trap 'rm -f "$AGENT_LIST_ERR"' EXIT
+if ! AGENTS=$(mise run -q agent:list 2>"$AGENT_LIST_ERR"); then
+  echo "Warning: unable to validate agent '$AGENT' against den agent:list; continuing with unvalidated agent env." >&2
+  if [ -s "$AGENT_LIST_ERR" ]; then
+    sed 's/^/  /' "$AGENT_LIST_ERR" >&2
+  fi
+  AGENTS=""
+elif [ -n "$AGENTS" ] && ! echo "$AGENTS" | grep -qx "$AGENT"; then
   echo "Error: unknown agent '$AGENT'" >&2
   exit 1
 fi
