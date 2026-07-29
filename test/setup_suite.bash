@@ -14,4 +14,10 @@ setup_suite() {
   # Load this repo's mise env so tests get the right tool versions regardless
   # of entry point. Requires `mise trust` for this repo.
   eval "$(cd "$REPO_DIR" && mise env)"
+
+  # Bats invokes internal helpers by name after setup_suite runs.
+  # Keep its libexec directory visible when mise env rewrites PATH.
+  if [ -n "${BATS_LIBEXEC:-}" ]; then
+    export PATH="$BATS_LIBEXEC:$PATH"
+  fi
 }
